@@ -1,0 +1,12 @@
+Since we were all talking about books before class I figured we could make an e-reader. 
+
+Features:
+  read various formats
+  recall where you left off / make bookmarks
+    data stored for each book opened
+  navigate book
+  change font size/color
+
+Work disribution:
+  1 person, write interface described above
+  2 people, import one file type each
