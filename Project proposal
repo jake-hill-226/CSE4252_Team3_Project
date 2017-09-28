@@ -1,11 +1,20 @@
-Since we were all talking about books before class I figured we could make an e-reader. 
+Project Checkpoint 1
+
+Group number: 3
+Team Name: ??
+Team Members: Alexandra Barnes
+              Jake Hill
+              Joshua Simmerson           
+Project title: E-reader
+Motivation: We like to read books.
 
 Features:
+  select book from personal library
   read various formats
-  recall where you left off / make bookmarks
+  navigate to chapters
+  recall where you left off and make bookmarks
     data stored for each book opened
-  navigate book
-  change font size/color
+  change font/size/color
 
 Work disribution:
   1 person, write interface described above
