@@ -1,21 +1,37 @@
 Project Checkpoint 1
 
 Group number: 3
-Team Name: ??
+Team Name: Team ChaoZ
 Team Members: Alexandra Barnes
               Jake Hill
-              Joshua Simmerson           
+              Joshua Simmerson
+----------------------------------------------
+
 Project title: E-reader
-Motivation: We like to read books.
+Motivation: We like to read books. 
+			Education on how to build an eReader.
+			Interest in posibilities with Console based UIs
 
 Features:
-  select book from personal library
-  read various formats
-  navigate to chapters
-  recall where you left off and make bookmarks
-    data stored for each book opened
-  change font/size/color
+  - Console based interface
+  - select book from personal library
+  - read various formats (.PDF, .TXT, .DOC, .DOCX, Compiled HTML, etc.)
+  - navigate to chapters
+  - recall where you left off and make bookmarks
+      data stored for each book opened
+  - change font/size/color
+  - notes in the margin
 
 Work disribution:
-  1 person, write interface described above
-  2 people, import one file type each
+  1 person, write UI interface described above
+  1 person, import different file types (at least PDFs and word formats),
+  			assist with middle logic and back-end if file conversion proves
+  			easier than expected.
+  1 person, write the middle logic that provides data to UI and logic to
+  			back-end
+
+*** For File Conversion ***
+We intend to use external libraries or Linux shell scripts to help
+in this process. Some scripts come standard with Linux (PDF converter),
+others we intend to look into their feasability. At the least we will have
+a plain-text reader, .PDF reader, and HTML interpreter.
