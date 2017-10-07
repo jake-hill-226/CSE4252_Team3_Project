@@ -1,152 +1,208 @@
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <limits>
+//============================================================================
+// Name        : lastn.cpp
+// Author      : Joshua Simmerson.4
+// Version     : 1.0
+// Description : CSE 4252 Lab 2
+//============================================================================
 
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <ctime>
+#include <cstdlib>
+#include <limits>
 using namespace std;
 
-void print_banner(string);
+void testSetup();
+void printHeader(string title);
+void openFileStream(fstream &stream, char * title, char io);
+void printBytes(fstream &in, char * name);
+int printLines(fstream &in, char * name);
+int getNum(int max);
+void tempFileName(char * name);
 
-int main(){
+int main() {
 
-	ifstream first_in ("first.txt");
-	ifstream second_in ("second.txt");
+	// restore first.txt to test another run
+	//testSetup();// enable for testing
 
-	/*
-		Find size of first.txt and second.txt
-	 */
-	int file_size;
+	// open input streams for first.txt and second.txt
+	char fileName1[] = "first.txt";
+	char fileName2[] = "second.txt";
+	fstream firstFileStream;
+	openFileStream(firstFileStream, fileName1, 'i');
+	fstream secondFileStream;
+	openFileStream(secondFileStream, fileName2, 'i');
 
-	first_in.seekg(0, ios_base::end);
-	file_size = first_in.tellg();
+	// print header and files sizes for first.txt and second.txt
+	printHeader("Size:");
+	printBytes(firstFileStream, fileName1);
+	printBytes(secondFileStream, fileName2);
 
-	print_banner("Size");
-	cout << "Size of 'first.txt': " << file_size << endl << endl;
+	// print header and number of lines per file for first.txt and second.txt
+	printHeader("Number of lines");
+	int firstLines = printLines(firstFileStream, fileName1);
+	int secondLines = printLines(secondFileStream, fileName2);
+	int minLines = min(firstLines, secondLines);
 
-	second_in.seekg(0, ios_base::end);
-	file_size = second_in.tellg();
-	cout << "Size of 'second.txt': " << file_size << endl << endl;
+	printHeader("Modification of first.txt");
 
-	first_in.seekg(0, ios_base::beg);
-	second_in.seekg(0, ios_base::beg);
+	// fill tempFile with lines per user input
+	int numEdit = getNum(minLines);
+	if (numEdit != 0) {
 
-	/*
-		Find how many lines each file has
-	 */
-	
-	string curr_line;
-	int num_lines_first = 0;
-	int num_lines_second = 0;
+		// create tempFile to hold output and open stream
+		char tempOutName[36];// disable for windows testing
+		tempFileName(tempOutName);// disable for windows testing
+		//char tempOutName[] = "lastnTEMPoutFILE.txt";// enable for windows testing
+		fstream tempOutStream;
+		openFileStream(tempOutStream, tempOutName, 'o');
 
-	while(getline(first_in, curr_line)){
-		num_lines_first ++;
-	}
-
-	print_banner("Number of Lines");
-	cout << "Number of lines first.txt: " << num_lines_first << endl << endl;
-
-	while(getline(second_in, curr_line)){
-		num_lines_second ++;
-	}
-
-	cout << "Number of lines second.txt: " << num_lines_second << endl << endl;
-
-	first_in.close();
-	second_in.close();
-	second_in.open("second.txt");
-
-	/*
-		Swap n lines beteween first and second
-	 */
-	print_banner("Modification of first.txt");
-
-	fstream first_f ("first.txt");
-	stringstream s_stream;
-
-	int n_lines;
-	cout << "Enter value for n: ";
-	cin >> n_lines;
-
-	if(n_lines > num_lines_second){
-		while(n_lines > num_lines_second){
-			cin.clear();
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-			cout << "ERROR: More lines than second.txt has." << endl
-					<< "Enter value for n: ";
-			cin >> n_lines;
+		// fill tempFile per numEdit
+		string buffer;
+		for (int i = 0; i < firstLines - numEdit; i++) {
+			getline(firstFileStream, buffer);
+			tempOutStream << buffer << "\n";
 		}
-	}
-
-	/* 
-		Read n lines of second.txt
-	*/
-	curr_line = "";
-	for(int i = 0; i < n_lines; i ++){
-		getline(second_in, curr_line);
-		s_stream << curr_line.data() << endl;
-	}
-
-	second_in.close();
-
-	/* 
-		Replace last n lines of first.txt
-	*/	
-	ofstream temp("temp.txt");
-	first_f.seekg(0, ios_base::beg);
-	string first_fname = "first.txt";
-	string temp_fname = "temp.txt";
-	const char * fname_p = first_fname.c_str();
-	const char * temp_p = temp_fname.c_str();
-
-	if(n_lines > num_lines_first){
-		// Completely overwrite first.txt		
-		temp << s_stream.str();
-
-	}else{
-		for(int i = 0; i < num_lines_first - n_lines; i++){
-			getline(first_f, curr_line);
+		for (int i = 0; i < numEdit - 1; i++) {
+			getline(secondFileStream, buffer);
+			tempOutStream << buffer << "\n";
 		}
-		first_f.seekg(0, ios_base::cur);
-		first_f << s_stream.str();
+		getline(secondFileStream, buffer);
+		tempOutStream << buffer;
 
-		int curr_pos = first_f.tellg();
-		first_f.seekg(0, ios_base::end);
+		// close streams
+		tempOutStream.close();
+		firstFileStream.close();
+		secondFileStream.close();
 
-		// Check for residue left in first.txt
-		if(curr_pos != first_f.tellg()){
-			ofstream temp("temp.txt");
-			first_f.seekg(0, ios_base::beg);
-
-			if(!temp){
-				cerr << "ERROR: temp does not exist";
-				return 1;
-			}
-
-			for(int i = 0; i < num_lines_first; i++){
-				getline(first_f, curr_line);
-
-				temp << curr_line << endl;
-			}
-			string first_fname = "first.txt";
-			string temp_fname = "temp.txt";
-			const char * fname_p = first_fname.c_str();
-			const char * temp_p = temp_fname.c_str();
+		// delete fileName1 and replace with tempFile
+		remove(fileName1);
+		if (rename(tempOutName, fileName1) != 0) {
+			cerr << "File renaming " << tempOutName << " to " << fileName1 << "failed";
+			exit(11);
 		}
+	} else {
+		// close streams
+		firstFileStream.close();
+		secondFileStream.close();
 	}
-
-	first_f.close();
-	temp.close();
-
-	remove(fname_p);
-	rename(temp_p, fname_p);
-
-	return 0;
+	return (0);
 }
 
-void print_banner(string message){
-	cout << "*********************************************************" << endl
-		 << message << endl
-		 << "*********************************************************" << endl;
+/*
+ Name: testSetup
+ Requires: bkup.txt
+ Results: bkup.txt copied to new first.txt
+ */
+void testSetup() {
+	remove("first.txt");
+	ifstream inF("bkup.txt");
+	ofstream outF("first.txt");
+	outF << inF.rdbuf();
+	inF.close();
+	outF.close();
+}
+
+/*
+ Name: printHeader
+ Inputs: string title, title of header
+ Output: to console
+ *************************
+ [title]
+ *************************
+ */
+void printHeader(string title) {
+	cout << "***************************************************************\n";
+	cout << title << endl;
+	cout << "***************************************************************\n";
+}
+
+/*
+ Name: openFileStream
+ Inputs: stream - stream to be opened
+ 	 	 file 	- name of file to be associated with stream
+ 	 	 io 	- i for input, o for output
+ Result: stream is open to 'file' in mode indicated
+ */
+void openFileStream(fstream &stream, char * file, char io) {
+	if (io == 'i') {
+		stream.open(file, fstream::in);
+	} else if (io == 'o') {
+		stream.open(file, fstream::out);
+	}
+	if (!stream.is_open()) {
+		cerr << "Unable to open file: " << file << endl;
+		exit(10);
+	}
+
+}
+
+/*
+ Name: printBytes
+ Inputs: in 	- open ifstream
+ 	 	 name 	- name of file associated with in
+ Output: to console
+ 	 	 [name]: [ # of bytes in 'in'] Bytes
+ */
+void printBytes(fstream &in, char * name) {
+	in.seekg(0, in.end);
+	cout << name << ": " << in.tellg() << " Bytes\n\n";
+	in.seekg(0, in.beg);
+}
+
+/*
+ Name: printLines
+ Inputs: in 	- open ifstream
+ 	 	 name 	- name of file associated with in
+ Output: to console
+ 	 	 [name]: [# of lines in 'in'] Bytes
+ Returns: int - # of lines in 'in'
+ */
+int printLines(fstream &in, char * name) {
+	int num = 0;
+	string trash;
+	while (!in.eof()) {
+		getline(in, trash);
+		num++;
+	}
+	cout << name << ": " << num << " Lines\n\n";
+	in.clear();
+	in.seekg(0, in.beg);
+	return num;
+}
+
+/*
+ Name: getNum
+ Inputs: max - maximum value returned
+ Returns int - with value v where 0 <= v <= max
+ */
+int getNum(int max) {
+	int num;
+	bool isNum = false;
+	cout << "Enter value of n: ";
+	while (!isNum) {
+		if (cin >> num && cin.peek() == '\n' && num >= 0 && num <= max) {
+			isNum = true;
+		} else {
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+			cout << "\nInvalid entry, please enter a number between 0 and " << max << ": \n";
+		}
+	}
+	return num;
+}
+
+/*
+ Name: tempFileName
+ Inputs: name - pointer to char array with length 36
+ Results name - will be a new file name with current date and time, of format:
+ 				"lastn.temp.Fri Oct 06 16:31:50 2017"
+ Warning - returned file name is not windows compatible
+  */
+void tempFileName(char * name) {
+	time_t t = time(NULL);
+	string time = ctime(&t);
+	string sName = "lastn.temp." + time;
+	strcpy(name, sName.c_str());
 }
