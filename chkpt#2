@@ -1,0 +1,31 @@
+Project Checkpoint 2  (Deadline: 10/23 by 11:59 PM)
+
+Group Number: 3
+Team Name: ChaoZ
+Team Members: Alexandra Barnes
+              Jake Hill
+              Joshua Simmerson
+Project Title: Linux E-Reader
+
+What all you plan/need to implemnet?
+  - Console based interface
+  - select book from personal library
+  - read a minimum of two ebook formats (.PDF, .TXT, .DOC, .DOCX, Compiled HTML, EPUB, BBeB, etc.)
+  - navigate to chapters
+  - recall where you left off and make bookmarks
+  - change font/size/color
+  - notes in the margin [sounds like a pain in the ass, can we drop this??]
+  
+How do you plan to test the implementation?
+  - eack fucntion/class tested by implementer
+  - whole program tested by each team member 
+    
+How are you going to check the performance (execution time/memory requirements etc.)?
+  - execution time: Callgraph, OProfile
+  - memory leaks: valgrind
+  
+What is the responsibility of each member? (Remember each member should be given coding task)
+  - tm#1  import one file format / support integrartion to interface / final testing
+  - tm#2  import one file format / support integrartion to interface / final testing
+  - tm#3  consle intercface / final testing
+  
