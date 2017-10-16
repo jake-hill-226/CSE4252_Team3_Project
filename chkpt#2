@@ -14,18 +14,18 @@ What all you plan/need to implemnet?
   - navigate to chapters
   - recall where you left off and make bookmarks
   - change font/size/color
-  - notes in the margin [sounds like a pain in the ass, can we drop this??]
   
 How do you plan to test the implementation?
-  - eack fucntion/class tested by implementer
-  - whole program tested by each team member 
+  - eack fucntion/class tested by implementer 
+  	- double checked by second group member as a black box test
+  - Regression testing for each feature added to the stable build of the project
     
 How are you going to check the performance (execution time/memory requirements etc.)?
   - execution time: Callgraph, OProfile
   - memory leaks: valgrind
   
 What is the responsibility of each member? (Remember each member should be given coding task)
-  - tm#1  import one file format / support integrartion to interface / final testing
-  - tm#2  import one file format / support integrartion to interface / final testing
-  - tm#3  consle intercface / final testing
+  - Jake Hill  import one file format / support integrartion to interface / final testing
+  - Alex Barnes  import one file format / support integrartion to interface / final testing
+  - Joshua Simmerson  consle intercface / final testing
   
