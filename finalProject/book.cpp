@@ -44,6 +44,12 @@ public:
 		}
 		file.close();
 	}
+	string getTitle() const {
+		return this->savedTitle;
+	}
+	unsigned int getIndex() const {
+		return this->currentIndex;
+	}
 	void setIndex(int newIndex) {
 		currentIndex = newIndex;
 	}
