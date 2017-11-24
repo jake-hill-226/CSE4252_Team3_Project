@@ -24,10 +24,11 @@ private:
 	string savedTitle;					// title of book for table of contents and file labeling
 	int numChapters;					// number of chapters is book
 	vector<pair<string, int> > chapters;// chapter title and line number where it is located
+	int numLines;						// number of lines in [title].txt
 
 public:
 	Book(string title) {				// opens book based on data file
-		savedTitle = title;
+		this->savedTitle = title;
 		ifstream file;
 		string buffer;
 		string buffer2;
@@ -35,17 +36,20 @@ public:
 		file.open(fName.c_str());
 
 		if (file.fail()) {
-			cerr << "Error (book.cpp constructor): cannot open file '" + fName << "'" <<endl;
+			cerr << "Error (book.cpp constructor): cannot open file '" + fName
+					<< "'" << endl;
 			cerr << "Closing Program..." << endl;
 			exit(EXIT_FAILURE);
 		}
 
 		//ALEX TODO: getline error checking
 		getline(file, buffer);
-		currentIndex = atoi(buffer.c_str());
+		this->currentIndex = atoi(buffer.c_str());
 		getline(file, buffer);
-		numChapters = atoi(buffer.c_str());
-		for (int i = 0; i < numChapters; i++) {
+		this->numLines = atoi(buffer.c_str());
+		getline(file, buffer);
+		this->numChapters = atoi(buffer.c_str());
+		for (int i = 0; i < this->numChapters; i++) {
 			getline(file, buffer);
 			getline(file, buffer2);
 			chapters.push_back(make_pair(buffer, atoi(buffer2.c_str())));
@@ -59,25 +63,29 @@ public:
 		return this->currentIndex;
 	}
 	void setIndex(int newIndex) {
-		currentIndex = newIndex;
+		this->currentIndex = newIndex;
 	}
-
+	unsigned int getNumLines() const {
+		return this->numLines;
+	}
 	~Book() {
 		ofstream file;
 		string fName = "./importedBooks/" + this->savedTitle + ".dat";
 		file.open(fName.c_str());
 
 		if (file.fail()) {
-			cerr << "Error (book.cpp destructor): cannot open file '" + fName << "'" <<endl;
+			cerr << "Error (book.cpp destructor): cannot open file '" + fName
+					<< "'" << endl;
 			cerr << "Closing Program..." << endl;
 			exit(EXIT_FAILURE);
 		}
 
 		file << this->currentIndex << endl;
+		file << this->numLines << endl;
 		file << this->numChapters << endl;
 		pair<string, int> buffer;
 		for (int i = 0; i < this->numChapters; i++) {
-			buffer = chapters[i];
+			buffer = this->chapters[i];
 			file << buffer.first << endl;
 			file << buffer.second << endl;
 		}
@@ -85,3 +93,4 @@ public:
 	}
 };
 #endif
+
