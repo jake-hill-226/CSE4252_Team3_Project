@@ -53,7 +53,8 @@ int main() {
 	cbreak();
 	keypad(stdscr, TRUE);
 	noecho();
-	const char * entries[] = { "Read Book", "Create test Library (only do this once)", "Exit" };
+	const char * entries[] = { "Read Book",
+			"Create test Library", "Exit" };
 	int numEntries = sizeof(entries) / sizeof(char *);
 
 	while (choice != numEntries - 1) {
@@ -86,27 +87,29 @@ void makeTestBook(string title, int numSentences) {
 
 	//file open error check
 	if (file.fail()) {
-		cerr << "Error (makeTestBook()): cannot open .txt file '" + fName << "'" <<endl;
+		cerr << "Error (makeTestBook()): cannot open .txt file '" + fName << "'"
+				<< endl;
 		cerr << "Closing Program..." << endl;
 		exit(EXIT_FAILURE);
 	}
 
 	int lines = 0;
 	// write intro if necessary
-	file << "intro here if applicable" << endl;
-	lines++;
+	file << "intro here if applicable" << flush;
+
 	// -- write book
 	for (int i = 0; i < 5; i++) {
-		file << "Chapter #" << i << ' ' << endl;
-		lines++;
+		file << endl << endl << "Chapter #" << i << ' ' << endl;
+		lines += 3;
 		chapIndex[i] = lines;
+		file << endl;
+		lines++;
 		for (int j = 0; j < numSentences; j++) {
 			file << "This here is sentence number " << j << " of chapter " << i
 					<< ".  ";
-			lines++;
 			if ((j % 10) == 0 && j > 1) {
 				file << endl << endl;
-				lines++;
+				lines += 2;
 			}
 		}
 	}
@@ -117,13 +120,16 @@ void makeTestBook(string title, int numSentences) {
 
 	//error check
 	if (file.fail()) {
-		cerr << "Error (makeTestBook()): cannot open .dat file '" + fName << "'" <<endl;
+		cerr << "Error (makeTestBook()): cannot open .dat file '" + fName << "'"
+				<< endl;
 		cerr << "Closing Program..." << endl;
 		exit(EXIT_FAILURE);
 	}
 
-	// - write current index = 0
+	// write current index = 0
 	file << '0' << endl;
+	// write number of lines in text file
+	file << lines << endl;
 	// write number of chapters
 	file << 5 << endl;
 	// write chapter indexes
@@ -170,12 +176,11 @@ void go2Line(fstream & stream, unsigned int lineNum) {
 
 // open library and return titles or creates library directory/file if not found
 vector<string> openLibrary() {
-	if (!isDir("./importedBooks/")){
+	if (!isDir("./importedBooks/")) {
 		const int dir_err = mkdir("./importedBooks/", S_IRWXU);
-		if (-1 == dir_err)
-		{
-		    cerr << "Error creating library directory." << endl;
-		    exit(1);
+		if (-1 == dir_err) {
+			cerr << "Error creating library directory." << endl;
+			exit(1);
 		}
 	}
 	vector<string> out;
@@ -205,8 +210,8 @@ void closeLibrary(vector<string> library) {	// TODO, check for duplicate titles 
 }
 
 // print screen of text
-void readBook(string title) {
-	Book * currentBook = new Book(title);
+void readBook(string title) {						//TODO make word by word instead of line by line
+	Book * currentBook = new Book(title);				//TODO overflows at end of file on school servers
 	unsigned int shift, index = currentBook->getIndex();
 	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
@@ -216,7 +221,7 @@ void readBook(string title) {
 	int charCount = 0;
 	int ch = 0;
 	string buffer;
-	while (ch != KEY_LEFT) {
+	while (ch != KEY_LEFT) {		
 		shift = 0;
 		index += shift;
 		go2Line(bookStream, index);
@@ -241,7 +246,12 @@ void readBook(string title) {
 			}
 			break;
 		case KEY_DOWN:
-			index += shift;		//TODO stop from going past end of file
+			if (index + shift > currentBook->getNumLines()) {
+				index = currentBook->getNumLines();
+			} else {
+				index += shift;
+			}
+
 			break;
 		default:
 			break;
@@ -317,7 +327,7 @@ void printMenu(WINDOW *menuWindow, const char * entries[], int selected,
 
 // check if directory exists
 bool isDir(const char* path) {
-    struct stat buf;
-    stat(path, &buf);
-    return S_ISDIR(buf.st_mode);
+	struct stat buf;
+	stat(path, &buf);
+	return S_ISDIR(buf.st_mode);
 }
