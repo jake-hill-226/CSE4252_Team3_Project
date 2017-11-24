@@ -14,6 +14,7 @@
 #include <cstring>
 #include <string>
 #include <sstream>
+#include <sys/stat.h>
 using namespace std;
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
@@ -32,37 +33,42 @@ vector<string> openLibrary();
 void closeLibrary(vector<string> library);
 
 // print screen of text
-int printText(fstream & stream, unsigned int index);
+void readBook(string title);
 
 // get user selection from entries
-int getSelection(char * entries[], int numEntries);
+int getSelection(const char * entries[], int numEntries);
 
 // print menu for getSelection
-void printMenu(WINDOW *menuWindow, char * entries[], int selected,
+void printMenu(WINDOW *menuWindow, const char * entries[], int selected,
 		int numEntries);
+
+// check if directory exists
+bool isDir(const char* path);
+
 int main() {
 	vector<string> library = openLibrary();
 	//makeTestLibrary(library);
-
+	int choice = 0;
 	initscr();
 	cbreak();
 	keypad(stdscr, TRUE);
 	noecho();
+	const char * entries[] = { "Read Book", "Create test Library (only do this once)", "Exit" };
+	int numEntries = sizeof(entries) / sizeof(char *);
 
-	/*
-	 Book currentBook = Book("Title: alpha");
-	 unsigned int index = currentBook.getIndex();
-	 int shift;
-	 fstream bookStream;
-	 bookStream.open("../importedBooks/" + currentBook.getTitle() + ".txt");
-	 shift = printText(bookStream, index);
-	 index += shift;
-	 getch();
-	 printText(bookStream, index);
-	 getch();
-	 bookStream.close();
-	 */
-
+	while (choice != numEntries - 1) {
+		choice = getSelection(entries, numEntries);
+		switch (choice) {
+		case 0:
+			readBook("Title: alpha");
+			break;
+		case 1:
+			makeTestLibrary(library);
+			break;
+		default:
+			break;
+		}
+	}
 	endwin();
 	closeLibrary(library);
 	return (0);
@@ -135,15 +141,26 @@ void makeTestLibrary(vector<string> library) {
 
 // goto line in input file
 void go2Line(fstream & stream, unsigned int lineNum) {
+	stream.clear();
 	stream.seekg(stream.beg);
-	for (unsigned int i = 1; i < lineNum; ++i) {
+	unsigned int i = 0;
+	while (i < lineNum && !stream.eof()) {
 		stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		i++;
 	}
 
 }
 
-// open library and return titles or create library file if not found
+// open library and return titles or creates library directory/file if not found
 vector<string> openLibrary() {
+	if (!isDir("./importedBooks/")){
+		const int dir_err = mkdir("./importedBooks/", S_IRWXU);
+		if (-1 == dir_err)
+		{
+		    cerr << "Error creating library directory." << endl;
+		    exit(1);
+		}
+	}
 	vector<string> out;
 	string buffer;
 	string fName = "./importedBooks/library.dat";
@@ -162,7 +179,7 @@ vector<string> openLibrary() {
 }
 
 // close library and save updates
-void closeLibrary(vector<string> library) {	// TODO, check for duplicate titles on incoming books duringn import
+void closeLibrary(vector<string> library) {	// TODO, check for duplicate titles on incoming books during import
 	string fName = "./importedBooks/library.dat";
 	ofstream file(fName.c_str());
 	for (unsigned int i = 0; i < library.size(); i++) {
@@ -171,37 +188,58 @@ void closeLibrary(vector<string> library) {	// TODO, check for duplicate titles 
 }
 
 // print screen of text
-int printText(fstream & stream, unsigned int index) {
-	go2Line(stream, index);
+void readBook(string title) {
+	Book * currentBook = new Book(title);
+	unsigned int shift, index = currentBook->getIndex();
+	fstream bookStream;
+	bookStream.open("./importedBooks/" + currentBook->getTitle() + ".txt");
 	int row, col;
 	int charCount = 0;
-	int linesDisplayed = 0;
+	int ch = 0;
 	string buffer;
-	getmaxyx(stdscr, row, col);
-	clear();
-	while (charCount < ((row * col) / 2)) {
-		getline(stream, buffer);
-		printw(buffer.c_str());
-		printw("\n");
-		charCount += buffer.size();
-		linesDisplayed++;
+	while (ch != KEY_LEFT) {
+		shift = 0;
+		index += shift;
+		go2Line(bookStream, index);
+		getmaxyx(stdscr, row, col);
+		clear();
+		while (charCount < ((row * col) / 2)) {
+			getline(bookStream, buffer);
+			printw(buffer.c_str());
+			printw("\n");
+			charCount += buffer.size();
+			shift++;
+		}
+		refresh();
+		charCount = 0;
+		ch = getch();
+		switch (ch) {
+		case KEY_UP:
+			if (index > shift) {
+				index -= shift;
+			} else {
+				index = 0;
+			}
+			break;
+		case KEY_DOWN:
+			index += shift;		//TODO stop from going past end of file
+			break;
+		default:
+			break;
+		}
 	}
-
-	refresh();
-	return linesDisplayed;
+	currentBook->setIndex(index);
+	bookStream.close();
+	delete currentBook;
 }
 
 // get user selection from entries
-int getSelection(char * entries[], int numEntries) {
-	int width = 76;
+int getSelection(const char * entries[], int numEntries) {
+	int width = 49;
 	int height = numEntries + 5;
 	int selected = 1;
 	int choice = 0;
 	int ch, row, col;
-	initscr();
-	clear();
-	noecho();
-	cbreak();
 	getmaxyx(stdscr, row, col);
 	WINDOW * menuWindow = newwin(height, width, (row - height) / 2,
 			(col - width) / 2);
@@ -231,27 +269,36 @@ int getSelection(char * entries[], int numEntries) {
 		printMenu(menuWindow, entries, selected, numEntries);
 	}
 	endwin();
-	return choice;
+	return choice - 1;
 }
 
 // print menu for getSelection
-void printMenu(WINDOW *menuWindow, char * entries[], int selected,
+void printMenu(WINDOW *menuWindow, const char * entries[], int selected,
 		int numEntries) {
 	int spacing = 1;
-	int lineNum = 2;
+	int lineNum = 1;
 	box(menuWindow, 0, 0);
-	wattron(menuWindow, A_BOLD);
-	mvwprintw(menuWindow, spacing, lineNum++,
-			"Use up and down arrow to highlight selection, and press enter to select.");
-	wattroff(menuWindow, A_BOLD);
+
 	for (int i = 0; i < numEntries; ++i) {
 		if (selected == i + 1) {
 			wattron(menuWindow, A_REVERSE);
-			mvwprintw(menuWindow, lineNum, spacing, "%s", entries[i]);
+			mvwprintw(menuWindow, lineNum++, spacing, "%s", entries[i]);
 			wattroff(menuWindow, A_REVERSE);
 		} else
-			mvwprintw(menuWindow, lineNum, spacing, "%s", entries[i]);
-		++lineNum;
+			mvwprintw(menuWindow, lineNum++, spacing, "%s", entries[i]);
 	}
+	lineNum++;
+	wattron(menuWindow, A_BOLD);
+	mvwprintw(menuWindow, lineNum++, spacing,
+			"Use up and down arrow to highlight selection.");
+	mvwprintw(menuWindow, lineNum++, spacing, "Then press enter to select.");
+	wattroff(menuWindow, A_BOLD);
 	wrefresh(menuWindow);
+}
+
+// check if directory exists
+bool isDir(const char* path) {
+    struct stat buf;
+    stat(path, &buf);
+    return S_ISDIR(buf.st_mode);
 }
