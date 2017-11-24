@@ -15,22 +15,23 @@
 #include <string>
 #include <sstream>
 #include <sys/stat.h>
+#include <queue>
 using namespace std;
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
 void makeTestBook(string title, int numSentences);
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
-void makeTestLibrary(vector<string> library);
+void makeTestLibrary(priority_queue<string> & library);
 
 // goto line in input file
 void go2Line(fstream & stream, unsigned int lineNum);
 
 // open library and return titles or create library file if not found
-vector<string> openLibrary();
+priority_queue<string> openLibrary();
 
 // close library and save updates
-void closeLibrary(vector<string> library);
+void closeLibrary(priority_queue<string> library);
 
 // print screen of text
 void readBook(string title);
@@ -46,172 +47,207 @@ void printMenu(WINDOW *menuWindow, const char * entries[], int selected,
 bool isDir(const char* path);
 
 int main() {
-	vector<string> library = openLibrary();
-	//makeTestLibrary(library);
+	//vector<string> library = openLibrary();
+	priority_queue<string> library = openLibrary();	//TODO make sure never pop when empty, will cause seg fault
+	string currentBook;
 	int choice = 0;
 	initscr();
 	cbreak();
 	keypad(stdscr, TRUE);
 	noecho();
-	const char * entries[] = { "Read Book",
+	const char * menuEntries[] = { "Read Book", "Select book",
 			"Create test Library", "Exit" };
-	int numEntries = sizeof(entries) / sizeof(char *);
+	int numEntries = sizeof(menuEntries) / sizeof(char *);
 
 	while (choice != numEntries - 1) {
-		choice = getSelection(entries, numEntries);
+		choice = getSelection(menuEntries, numEntries);
 		switch (choice) {
 		case 0:
 			readBook("Title: alpha");
 			//readBook("this title doesnt exist"); //error check
 			break;
-		case 1:
-			makeTestLibrary(library);
+		case 1: {
+
+			int numBooks = library.size();
+			string books[library.size()];
+			const char * books2[library.size()];
+			for (int i = 0; i < numBooks; i++) {
+				books[i] = library.top();
+				books2[i] = books[i].c_str();
+				library.pop();
+			}
+			for (int j = 0; j < numBooks; j++) {
+				library.push(books[j].c_str());
+			}
+				/*			int numBooks = library.size();
+				 const char * books[library.size()];
+				 for (int i = 0; i < numBooks; i++) {
+				 books[i] = library.top().c_str();
+				 library.pop();
+				 }
+				 for (int j = 0; j < numBooks; j++) {
+				 library.push(books[j]);
+				 }*/
+
+				getSelection(books2, library.size());
+			}
 			break;
-		default:
+			case 2:
+			makeTestLibrary(library);
+
+			break;
+			default:
 			break;
 		}
+		}
+		endwin();
+
+		closeLibrary(library);
+		return (0);
 	}
-	endwin();
-	closeLibrary(library);
-	return (0);
-}
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
-void makeTestBook(string title, int numSentences) {
-	int chapIndex[5] = { };
+	void makeTestBook(string title, int numSentences) {
+		int chapIndex[5] = {};
 
-	// make text file and record indexes for dat file
-	ofstream file;
-	string fName = "./importedBooks/" + title + ".txt";
-	file.open(fName.c_str());
+		// make text file and record indexes for dat file
+		ofstream file;
+		string fName = "./importedBooks/" + title + ".txt";
+		file.open(fName.c_str());
 
-	//file open error check
-	if (file.fail()) {
-		cerr << "Error (makeTestBook()): cannot open .txt file '" + fName << "'"
-				<< endl;
-		cerr << "Closing Program..." << endl;
-		exit(EXIT_FAILURE);
-	}
+		//file open error check
+		if (file.fail()) {
+			cerr << "Error (makeTestBook()): cannot open .txt file '" + fName << "'"
+			<< endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
 
-	int lines = 0;
-	// write intro if necessary
-	file << "intro here if applicable" << flush;
+		int lines = 0;
+		// write intro if necessary
+		file << "intro here if applicable" << flush;
 
-	// -- write book
-	for (int i = 0; i < 5; i++) {
-		file << endl << endl << "Chapter #" << i << ' ' << endl;
-		lines += 3;
-		chapIndex[i] = lines;
-		file << endl;
-		lines++;
-		for (int j = 0; j < numSentences; j++) {
-			file << "This here is sentence number " << j << " of chapter " << i
-					<< ".  ";
-			if ((j % 10) == 0 && j > 1) {
-				file << endl << endl;
-				lines += 2;
+		// -- write book
+		for (int i = 0; i < 5; i++) {
+			file << endl << endl << "Chapter #" << i << ' ' << endl;
+			lines += 3;
+			chapIndex[i] = lines;
+			file << endl;
+			lines++;
+			for (int j = 0; j < numSentences; j++) {
+				file << "This here is sentence number " << j << " of chapter " << i
+				<< ".  ";
+				if ((j % 10) == 0 && j > 1) {
+					file << endl << endl;
+					lines += 2;
+				}
 			}
 		}
-	}
-	file.close();
-	// write data file
-	fName = "./importedBooks/" + title + ".dat";
-	file.open(fName.c_str());
+		file.close();
+		// write data file
+		fName = "./importedBooks/" + title + ".dat";
+		file.open(fName.c_str());
 
-	//error check
-	if (file.fail()) {
-		cerr << "Error (makeTestBook()): cannot open .dat file '" + fName << "'"
-				<< endl;
-		cerr << "Closing Program..." << endl;
-		exit(EXIT_FAILURE);
-	}
+		//error check
+		if (file.fail()) {
+			cerr << "Error (makeTestBook()): cannot open .dat file '" + fName << "'"
+			<< endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
 
-	// write current index = 0
-	file << '0' << endl;
-	// write number of lines in text file
-	file << lines << endl;
-	// write number of chapters
-	file << 5 << endl;
-	// write chapter indexes
-	for (int i = 0; i < 5; i++) {
-		file << "Chapter " << i << endl;
-		file << *(chapIndex + i) << endl;
+		// write current index = 0
+		file << '0' << endl;
+		// write number of lines in text file
+		file << lines << endl;
+		// write number of chapters
+		file << 5 << endl;
+		// write chapter indexes
+		for (int i = 0; i < 5; i++) {
+			file << "Chapter " << i << endl;
+			file << *(chapIndex + i) << endl;
+		}
 	}
-}
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
-void makeTestLibrary(vector<string> library) {
-	int numLines = 50;
-	makeTestBook("Title: alpha", numLines);
-	library.push_back("Title: alpha");
-	makeTestBook("Title: bravo", numLines);
-	library.push_back("Title: bravo");
-	makeTestBook("Title: charlie", numLines);
-	library.push_back("Title: charlie");
-	makeTestBook("Title: delta", numLines);
-	library.push_back("Title: delta");
-	makeTestBook("Title: echo", numLines);
-	library.push_back("Title: echo");
-	makeTestBook("Title: foxtrot", numLines);
-	library.push_back("Title: foxtrot");
-	makeTestBook("Title: golf", numLines);
-	library.push_back("Title: golf");
-	makeTestBook("Title: hotel", numLines);
-	library.push_back("Title: hotel");
-	makeTestBook("Title: india", numLines);
-	library.push_back("Title: india");
-}
+	void makeTestLibrary(priority_queue<string> & library) {
+		int numLines = 50;
+		makeTestBook("Title: alpha", numLines);
+		library.push("Title: alpha");
+		makeTestBook("Title: bravo", numLines);
+		library.push("Title: bravo");
+		makeTestBook("Title: charlie", numLines);
+		library.push("Title: charlie");
+		makeTestBook("Title: delta", numLines);
+		library.push("Title: delta");
+		makeTestBook("Title: echo", numLines);
+		library.push("Title: echo");
+		makeTestBook("Title: foxtrot", numLines);
+		library.push("Title: foxtrot");
+		makeTestBook("Title: golf", numLines);
+		library.push("Title: golf");
+		makeTestBook("Title: hotel", numLines);
+		library.push("Title: hotel");
+		makeTestBook("Title: india", numLines);
+		library.push("Title: india");
+
+	}
 
 // goto line in input file
-void go2Line(fstream & stream, unsigned int lineNum) {
-	stream.clear();
-	stream.seekg(stream.beg);
-	unsigned int i = 0;
-	while (i < lineNum && !stream.eof()) {
-		stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		i++;
-	}
+	void go2Line(fstream & stream, unsigned int lineNum) {
+		stream.clear();
+		stream.seekg(stream.beg);
+		unsigned int i = 0;
+		while (i < lineNum && !stream.eof()) {
+			stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			i++;
+		}
 
-}
+	}
 
 // open library and return titles or creates library directory/file if not found
-vector<string> openLibrary() {
-	if (!isDir("./importedBooks/")) {
-		const int dir_err = mkdir("./importedBooks/", S_IRWXU);
-		if (-1 == dir_err) {
-			cerr << "Error creating library directory." << endl;
-			exit(1);
+	priority_queue < string > openLibrary()
+	{
+		if (!isDir("./importedBooks/")) {
+			if (-1 == mkdir("./importedBooks/", S_IRWXU)) {
+				cerr << "Error creating library directory." << endl;
+				exit(1);
+			}
 		}
-	}
-	vector<string> out;
-	string buffer;
-	string fName = "./importedBooks/library.dat";
-	ifstream file(fName.c_str());
-	if (file.good()) {
-		while (getline(file, buffer) && file.peek() != '\n') {
-			out.push_back(buffer);
+		priority_queue<string> out;
+		string buffer;
+		string fName = "./importedBooks/library.dat";
+		ifstream file(fName.c_str());
+		if (file.good()) {
+			while (getline(file, buffer) && file.peek() != '\n') {
+				out.push(buffer);
+			}
+		} else {
+			fName = "./importedBooks/library.dat";
+			ofstream newFile(fName);
+			newFile.close();
 		}
-	} else {
-		fName = "./importedBooks/library.dat";
-		ofstream newFile(fName.c_str());
-		newFile.close();
+
+		file.close();
+		return out;
 	}
-	file.close();
-	return out;
-}
 
 // close library and save updates
-void closeLibrary(vector<string> library) {	// TODO, check for duplicate titles on incoming books during import
+void closeLibrary(priority_queue<string> library) {	// TODO, check for duplicate titles on incoming books during import
 	string fName = "./importedBooks/library.dat";
 	ofstream file(fName.c_str());
-	for (unsigned int i = 0; i < library.size(); i++) {
-		file << library[i] << endl;
+	string buffer;
+	while (library.size() > 0) {
+		buffer = library.top();
+		file << buffer << endl;
+		library.pop();
+		;
 	}
 }
 
 // print screen of text
-void readBook(string title) {						//TODO make word by word instead of line by line
-	Book * currentBook = new Book(title);				//TODO overflows at end of file on school servers
+void readBook(string title) {	//TODO make word by word instead of line by line
+	Book * currentBook = new Book(title);//TODO overflows at end of file on school servers
 	unsigned int shift, index = currentBook->getIndex();
 	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
@@ -221,7 +257,7 @@ void readBook(string title) {						//TODO make word by word instead of line by l
 	int charCount = 0;
 	int ch = 0;
 	string buffer;
-	while (ch != KEY_LEFT) {		
+	while (ch != KEY_LEFT) {
 		shift = 0;
 		index += shift;
 		go2Line(bookStream, index);
@@ -238,14 +274,14 @@ void readBook(string title) {						//TODO make word by word instead of line by l
 		charCount = 0;
 		ch = getch();
 		switch (ch) {
-		case KEY_UP:
+			case KEY_UP:
 			if (index > shift) {
 				index -= shift;
 			} else {
 				index = 0;
 			}
 			break;
-		case KEY_DOWN:
+			case KEY_DOWN:
 			if (index + shift > currentBook->getNumLines()) {
 				index = currentBook->getNumLines();
 			} else {
@@ -253,7 +289,7 @@ void readBook(string title) {						//TODO make word by word instead of line by l
 			}
 
 			break;
-		default:
+			default:
 			break;
 		}
 	}
@@ -277,22 +313,22 @@ int getSelection(const char * entries[], int numEntries) {
 	while (choice == 0) {
 		ch = wgetch(menuWindow);
 		switch (ch) {
-		case KEY_UP:
+			case KEY_UP:
 			if (selected == 1)
-				selected = numEntries;
+			selected = numEntries;
 			else
-				--selected;
+			--selected;
 			break;
-		case KEY_DOWN:
+			case KEY_DOWN:
 			if (selected == numEntries)
-				selected = 1;
+			selected = 1;
 			else
-				++selected;
+			++selected;
 			break;
-		case 10:
+			case 10:
 			choice = selected;
 			break;
-		default:
+			default:
 			break;
 		}
 		printMenu(menuWindow, entries, selected, numEntries);
@@ -303,7 +339,7 @@ int getSelection(const char * entries[], int numEntries) {
 
 // print menu for getSelection
 void printMenu(WINDOW *menuWindow, const char * entries[], int selected,
-		int numEntries) {
+		int numEntries) {					//TODO auto resize when menu open
 	int spacing = 1;
 	int lineNum = 1;
 	box(menuWindow, 0, 0);
@@ -314,7 +350,7 @@ void printMenu(WINDOW *menuWindow, const char * entries[], int selected,
 			mvwprintw(menuWindow, lineNum++, spacing, "%s", entries[i]);
 			wattroff(menuWindow, A_REVERSE);
 		} else
-			mvwprintw(menuWindow, lineNum++, spacing, "%s", entries[i]);
+		mvwprintw(menuWindow, lineNum++, spacing, "%s", entries[i]);
 	}
 	lineNum++;
 	wattron(menuWindow, A_BOLD);
@@ -331,3 +367,4 @@ bool isDir(const char* path) {
 	stat(path, &buf);
 	return S_ISDIR(buf.st_mode);
 }
+
