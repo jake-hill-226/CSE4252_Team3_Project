@@ -33,6 +33,14 @@ public:
 		string buffer2;
 		string fName = "./importedBooks/" + title + ".dat";
 		file.open(fName.c_str());
+
+		if (file.fail()) {
+			cerr << "Error (book.cpp constructor): cannot open file '" + fName << "'" <<endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
+
+		//ALEX TODO: getline error checking
 		getline(file, buffer);
 		currentIndex = atoi(buffer.c_str());
 		getline(file, buffer);
@@ -58,6 +66,13 @@ public:
 		ofstream file;
 		string fName = "./importedBooks/" + this->savedTitle + ".dat";
 		file.open(fName.c_str());
+
+		if (file.fail()) {
+			cerr << "Error (book.cpp destructor): cannot open file '" + fName << "'" <<endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
+
 		file << this->currentIndex << endl;
 		file << this->numChapters << endl;
 		pair<string, int> buffer;

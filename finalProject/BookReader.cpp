@@ -61,6 +61,7 @@ int main() {
 		switch (choice) {
 		case 0:
 			readBook("Title: alpha");
+			//readBook("this title doesnt exist"); //error check
 			break;
 		case 1:
 			makeTestLibrary(library);
@@ -82,6 +83,14 @@ void makeTestBook(string title, int numSentences) {
 	ofstream file;
 	string fName = "./importedBooks/" + title + ".txt";
 	file.open(fName.c_str());
+
+	//file open error check
+	if (file.fail()) {
+		cerr << "Error (makeTestBook()): cannot open .txt file '" + fName << "'" <<endl;
+		cerr << "Closing Program..." << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	int lines = 0;
 	// write intro if necessary
 	file << "intro here if applicable" << endl;
@@ -105,6 +114,14 @@ void makeTestBook(string title, int numSentences) {
 	// write data file
 	fName = "./importedBooks/" + title + ".dat";
 	file.open(fName.c_str());
+
+	//error check
+	if (file.fail()) {
+		cerr << "Error (makeTestBook()): cannot open .dat file '" + fName << "'" <<endl;
+		cerr << "Closing Program..." << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	// - write current index = 0
 	file << '0' << endl;
 	// write number of chapters
@@ -191,8 +208,10 @@ void closeLibrary(vector<string> library) {	// TODO, check for duplicate titles 
 void readBook(string title) {
 	Book * currentBook = new Book(title);
 	unsigned int shift, index = currentBook->getIndex();
+	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
-	bookStream.open("./importedBooks/" + currentBook->getTitle() + ".txt");
+	//ALEX TODO: error checking for bookStream
+	bookStream.open(fName.c_str());
 	int row, col;
 	int charCount = 0;
 	int ch = 0;
