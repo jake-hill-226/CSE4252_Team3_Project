@@ -39,6 +39,9 @@ bool isDir(const char* path);
 // select book from library
 string selectBook(priority_queue<string> library);
 
+// select chapter and move index to appropriate location
+void jumpToChapter(string selectedBook);
+
 // import a book from pdf format
 void importBook(const char * path);
 
@@ -50,7 +53,7 @@ int main() {
 	cbreak();
 	keypad(stdscr, TRUE);
 	noecho();
-	const char * menuEntries[] = { "Read Book", "Select book", "Import Book", "Create test Library", "Exit" };
+	const char * menuEntries[] = { "Read Book", "Select book", "Select Chapter", "Import Book", "Create test Library", "Exit" };
 	int numEntries = sizeof(menuEntries) / sizeof(char *);
 	while (choice != numEntries - 1) {
 		choice = getSelection(menuEntries, numEntries);
@@ -64,13 +67,16 @@ int main() {
 			currentBook = selectBook(library);
 			break;
 		case 2:
+			jumpToChapter(currentBook);
+			break;
+		case 3:
 			// TODO add .txt/.dat files to directory and add library
 			// TODO, check for duplicate titles on incoming books during import
 			clear();
 			printw("Add import function here");
 			refresh();
 			break;
-		case 3:
+		case 4:
 			makeTestLibrary(library);
 			break;
 		default:
@@ -117,6 +123,9 @@ void makeTestBook(string title, int numSentences) {
 			}
 		}
 	}
+	file << " " << endl;
+	file << " " << endl;
+	lines++;
 	file.close();
 	// write data file
 	fName = "./importedBooks/" + title + ".dat";
@@ -211,7 +220,8 @@ void closeLibrary(priority_queue<string> library, string lastBook) {
 // print screen of text
 void readBook(string title) {
 	Book * currentBook = new Book(title);
-	unsigned int shift, index = currentBook->getIndex();
+	unsigned int index = currentBook->getIndex();
+	unsigned int linesPerScreen;
 	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
 	//ALEX TODO: error checking for bookStream, there is an error if no book selected when this is called, can happen on initial startup
@@ -221,44 +231,45 @@ void readBook(string title) {
 	int ch = 0;
 	string buffer;
 	while (ch != KEY_LEFT) {
-		shift = 0;
-		index += shift;
 		bookStream.clear();
 		bookStream.seekg(bookStream.beg);
 		unsigned int i = 0;
+		charCount = 0;
 		while (i < index && !bookStream.eof()) {
 			bookStream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			i++;
 		}
 		getmaxyx(stdscr, row, col);
 		clear();
-		while (charCount < ((row * col) / 2)) {
+		linesPerScreen = 0;
+		while (charCount < ((row * col) / 2) && (index + linesPerScreen) < (currentBook->getNumLines())) {
 			getline(bookStream, buffer);
 			printw(buffer.c_str());
 			printw("\n");
 			charCount += buffer.size();
-			shift++;
+			linesPerScreen++;
 		}
 		refresh();
-		charCount = 0;
 		ch = getch();
-		switch (ch) {
-		case KEY_UP:
-			if (index > shift) {
-				index -= shift;
-			} else {
-				index = 0;
+			switch (ch) {
+			case KEY_UP:
+				if (index > linesPerScreen){
+					index -= linesPerScreen;
+				}else {
+					index=0;
+				}
+				break;
+			case KEY_DOWN:
+				if (index + linesPerScreen < currentBook->getNumLines()) {
+					index += linesPerScreen;
+				} else {
+					index = currentBook->getNumLines()-linesPerScreen;
+				}
+				break;
+			default:
+				break;
 			}
-			break;
-		case KEY_DOWN:
-			if (index + shift < (currentBook->getNumLines())) {
-				index += shift;
-			}
-			break;
-		default:
-			break;
 		}
-	}
 	currentBook->setIndex(index);
 	bookStream.close();
 	delete currentBook;
@@ -348,6 +359,19 @@ string selectBook(priority_queue<string> library) {
 	return selectedBook;
 }
 
+// select chapter and move index to appropriate location
+void jumpToChapter(string selectedBook){
+	vector<pair<string, int> > chapters;
+	Book * currentBook = new Book(selectedBook);
+	const char * chapterTitles[currentBook->getChapters().size()];
+	for (int i =0; i < (int)currentBook->getChapters().size(); i++){
+		chapterTitles[i]=currentBook->getChapters()[i].first.c_str();
+	}
+	int selection =getSelection(chapterTitles, currentBook->getChapters().size());
+	currentBook->setIndex(currentBook->getChapters()[selection].second-1);
+	delete currentBook;
+}
+
 void importBook(const char * path){
 	if(isDir(path)){
 		try{
@@ -363,4 +387,3 @@ void importBook(const char * path){
 		cout << "Path does not exist, book was not imported";
 	}
 }
-
