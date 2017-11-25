@@ -1,28 +1,0 @@
-Jake Hill CSE4252 Sangeeta Kumari Homework 2 Due: 1 1-6-17 11:59pm
-1) W hat are the different t ypes of inheritance? Give the s yntax f or each in C ++.
-Public : class f oo :  p ublic b ar { ...}
-Protected: Class foo :  protected bar {...}
-Private class f oo : bar {...} / /defaults to p rivate if access control is not d efined
-2) With the discussed example in class ( Person a s base and S tudent derived from i t), discuss u pcasting and d owncasting.
-Let Person b e a  base c lass of S tudent, w here Student i s a  derived c lass o f Person. Let both c lasses share a  common m ethod " void show()", Person h as a member variable  n ame, and S tudent h as a  m ember v ariable major.
-Upcasting: This allows a pointer t o a base class t o b e implicitly cast to one of its d erived c lasses,
-Student s ; Person *pPerson = & s; In t he above e xample, pPerson is allowed t o b e a ssigned, without t ype casting, t o t he address of a S tudent o bject s ince a  S tudent h as t he s ame member functions o f P erson, p lus i ts o wn member f unction(s) d efined i n its class d efinition. T his h owever, alludes i tself to another t rait of t his o peration called o bject s licing which I  will discuss in q uestion 3 .
-
-Downcasting: This a llows a pointer t o a  derived class t o be explicitly cast t o its base c lass.
-Person p; Student * pStudent = ( Student *) & p; // explicit cast is r equired This operation i s d angerous h owever, s ince, in o ur example, you would  be allowing a pointer t o have a ccess t o m ember f unctions t hat the object i n which it i s pointing t o does n ot a ctually p ossess. I.e. i f y ou c alled "pStudent - > major; "  this would result i n a  runtime error since p does not h ave a major m ember v ariable t hus, you are accessing memory o utside of r eferenced o bject's memory address space.
-3) W ith the k nowledge o f previous q uestion, e xplain O bject S licing w ith an example.
-Object Slicing is a b yproduct o f a n u pcasting o peration such t hat since you are assigning a r eference for a d erived class t o a  b ase c lass pointer you are striping t he access to u nique member functions a nd v ariables of that d erived class o bject's memory space.
-For e xample: Student s ; Person * pPerson = &s; Cout < < s .major; / / compiles j ust f ine Cout << p Person.major // error c lass Person h as no m ember named `major'
-4) Can we h ave v irtual constructors? If no, then why n ot?
-No we cannot. Virtual f unctions a re u sed run c ommon m ember f unctions b etween base a nd derived c lasses w ithout knowing the e xact type of an object b ut s imply the interface. When creating a n object w e m ust know e xactly w hat we are trying to create so that w e can allocate the proper memory s pace f or it on t he stack o r heap. Thus, having a v irtual constructor contradicts t he requirements of a c onstructor.
-
-5) W hat i s t he d ifference between overriding and o verloading? G ive c ode snippets.
-Overriding: T o redefine t he definition o f an e xisting function or o perator Ex:
-class f oo{ public: void print(){ cout < < "I am f oo"; }
-}
-class b ar : public f oo { public: // H ere we overload the function print() // originally d efined in foo's parent c lass void p rint(){ cout < < "I a m bar"; }
-} Overloading: T o d efine a  function m ore than once but w ith sets o f f ormal p arameters which a re different in t he n umber of p arameters and the data types w hich they ask f or. Ex:
-class foo{ public: void print(){ cout < < "I a m f oo"; } void p rint(int bar){ ... } void print(double d_bar){ ... }
-}
-
-
