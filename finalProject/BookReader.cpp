@@ -62,7 +62,7 @@ int main() {
 		case 0:
 			//TODO this error check is not enough I've had it crash on unitilized string
 			//it seems to work now
-			if (!currentBook.empty()) {  
+			if (!currentBook.empty() || currentBook!="SelectBookDefault") {  
 				readBook(currentBook); //readBook("this title doesnt exist"); //error check,
 			}
 			break;
@@ -70,7 +70,9 @@ int main() {
 			currentBook = selectBook(library);
 			break;
 		case 2:
-			jumpToChapter(currentBook);
+			//if (!currentBook.empty() || currentBook!="SelectBookDefault") {  
+				jumpToChapter(currentBook);
+			//}
 			break;
 		case 3:
 			// TODO add .txt/.dat files to directory and add library
@@ -230,6 +232,10 @@ void closeLibrary(priority_queue<string> library, string lastBook) {
 
 // print screen of text
 void readBook(string title) {
+	//if empty title, or SelectBookDefault
+	if (title.empty() || title=="SelectBookDefault") {
+		return;
+	}
 	Book * currentBook = new Book(title);
 	unsigned int index = currentBook->getIndex();
 	unsigned int linesPerScreen;
@@ -360,8 +366,11 @@ bool isDir(const char* path) {
 string selectBook(priority_queue<string> library) {
 
 	//ALEX TODO: add check for selecting book when library empty
-	string selectedBook;
+	string selectedBook = "SelectBookDefault";
 	int numBooks = library.size();
+	if (numBooks == 0) {
+		return selectedBook;
+	}
 	string booksString[library.size()];
 	const char * booksChar[library.size()];
 	for (int i = 0; i < numBooks; i++) {
@@ -452,6 +461,9 @@ int importBook(const char * path){
 
 // select chapter and move index to appropriate location
 void jumpToChapter(string selectedBook){
+	if (selectedBook.empty() || selectedBook=="SelectBookDefault"){
+		return;
+	}
 	vector<pair<string, int> > chapters;
 	Book * currentBook = new Book(selectedBook);
 	const char * chapterTitles[currentBook->getChapters().size()];
