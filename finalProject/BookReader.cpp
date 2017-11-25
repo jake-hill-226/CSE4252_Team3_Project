@@ -13,6 +13,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <queue>
+#include <sstream>
 using namespace std;
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
@@ -40,7 +41,7 @@ bool isDir(const char* path);
 string selectBook(priority_queue<string> library);
 
 // import a book from pdf format
-void importBook(const char * path);
+int importBook(const char * path);
 
 int main() {
 	string currentBook;
@@ -348,44 +349,66 @@ string selectBook(priority_queue<string> library) {
 	return selectedBook;
 }
 
-void importBook(const char * path){
-	if(isDir(path)){
-		try{
-			if (!isDir("./importedBooks/")) {
-				if (-1 == mkdir("./importedBooks/", S_IRWXU)) {
-					cerr << "Error creating library directory." << endl;
-					exit(1);
-				}
-			}
-			string s_path(path);
-    
-	    string command = "pdftotext -nopgbrk ";
-	    command.append(path);
-	    
-			status = system(command.c_str());
-	    
-	    command  = "cp ";
-	    
-	    int i = s_path.find(".pdf");
-	    
-	    if(i == string::npos){
-	      return 0;
-	    }
-	    
-	    s_path.replace(i, 4, ".txt");
-	    command.append(s_path);
-	    
-	    command.append(" ./importedBooks");
-	    
-	    cout << command << endl;
-	    
-	    system(command.c_str());
-		
-		} catch(const std::exception& e) {
-			cout << "Failed to execute command";
-		}
-	}else{
-		cout << "Path does not exist, book was not imported";
-	}
+int importBook(const char * path){
+	
+	string f_export_name; // name of the exported txt file
+  fstream f_export;			// exported txt file object
+  
+  // Allow for manipulation of path via string methods
+  string s_path(path);
+  
+  // Check if path is to .pdf file
+  int index = s_path.find(".pdf");
+  
+  if(index == string::npos){
+    cout << "Path chosen does not point to a .pdf file" << endl;
+    return -1;
+  }
+
+  // Call executable for pdftotext given the input path
+  string command = "pdftotext -nopgbrk ";
+  command.append(path);
+  
+  system(command.c_str());
+  
+  
+  // Get the path for the .txt output of pdftotext
+  s_path.replace(index, 4, ".txt");
+  
+  while(s_path[index] != '/' && index > 0){
+    index --;
+  }
+  
+  f_export_name = s_path.substr(index+1);
+  
+  // Check if pdftotext successfully exported a .txt
+  f_export.open(s_path.c_str());
+  
+  if(f_export.fail()){
+    cout << ".txt failed to be instantiated";
+    return -1;
+  }
+  
+  // Read exported .txt and copy to new/existing file
+  stringstream export_content;
+  string buffer;
+  while(getline(f_export, buffer)){
+    export_content << buffer;
+    export_content << endl;
+  }
+  f_export.close();
+  
+  ofstream f_new_book(f_export_name.c_str());
+  
+  if(f_new_book.fail()){
+    cout << "Failed to create new file" << endl;
+    return -1;
+  }
+  
+  f_new_book << export_content.str();
+  
+  f_new_book.close();
+
+	return 1;
 }
 
