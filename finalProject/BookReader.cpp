@@ -60,19 +60,13 @@ int main() {
 		choice = getSelection(menuEntries, numEntries);
 		switch (choice) {
 		case 0:
-			//TODO this error check is not enough I've had it crash on unitilized string
-			//it seems to work now
-			if (!currentBook.empty() || currentBook!="SelectBookDefault") {  
-				readBook(currentBook); //readBook("this title doesnt exist"); //error check,
-			}
+			readBook(currentBook);
 			break;
 		case 1:
 			currentBook = selectBook(library);
 			break;
 		case 2:
-			//if (!currentBook.empty() || currentBook!="SelectBookDefault") {  
-				jumpToChapter(currentBook);
-			//}
+			jumpToChapter(currentBook);
 			break;
 		case 3:
 			// TODO add .txt/.dat files to directory and add library
@@ -365,7 +359,7 @@ bool isDir(const char* path) {
 // select book from library
 string selectBook(priority_queue<string> library) {
 
-	//ALEX TODO: add check for selecting book when library empty
+	//check for selecting book when library empty
 	string selectedBook = "SelectBookDefault";
 	int numBooks = library.size();
 	if (numBooks == 0) {
