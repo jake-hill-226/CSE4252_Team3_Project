@@ -39,6 +39,9 @@ bool isDir(const char* path);
 // select book from library
 string selectBook(priority_queue<string> library);
 
+// import a book from pdf format
+void importBook(const char * path);
+
 int main() {
 	string currentBook;
 	priority_queue<string> library = openLibrary(currentBook); //TODO make sure never pop when empty, will cause seg fault
@@ -343,5 +346,19 @@ string selectBook(priority_queue<string> library) {
 	printw(selectedBook.c_str());
 	refresh();
 	return selectedBook;
+}
+
+void importBook(const char * path){
+	if(isDir(path)){
+		try{
+    
+			system("pdftotext " + path);
+		
+		} catch(const std::exception& e) {
+			cout << "Failed to execute command";
+		}
+	}else{
+		cout << "Path does not exist, book was not imported"
+	}
 }
 
