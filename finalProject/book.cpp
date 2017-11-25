@@ -65,6 +65,9 @@ public:
 	void setIndex(int newIndex) {
 		this->currentIndex = newIndex;
 	}
+	vector<pair<string, int> > getChapters() const{
+		return this->chapters;
+	}
 	unsigned int getNumLines() const {
 		return this->numLines;
 	}
@@ -93,4 +96,3 @@ public:
 	}
 };
 #endif
-
