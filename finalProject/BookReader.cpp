@@ -69,6 +69,7 @@ int main() {
 			// TODO, check for duplicate titles on incoming books during import
 			clear();
 			printw("Add import function here");
+			importBook("../Test_PDF_Files/SweatingCandles.pdf")
 			refresh();
 			break;
 		case 3:
