@@ -351,14 +351,16 @@ string selectBook(priority_queue<string> library) {
 void importBook(const char * path){
 	if(isDir(path)){
 		try{
+			string command("pdftotext ");
+			command.append(path);
     
-			system("pdftotext " + path);
+			system(command.c_str());
 		
 		} catch(const std::exception& e) {
 			cout << "Failed to execute command";
 		}
 	}else{
-		cout << "Path does not exist, book was not imported"
+		cout << "Path does not exist, book was not imported";
 	}
 }
 
