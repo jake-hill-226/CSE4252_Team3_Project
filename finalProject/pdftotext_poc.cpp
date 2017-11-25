@@ -64,7 +64,7 @@ int main(){
   }
   f_export.close();
   
-  ofstream f_new_book(f_export_name.c_str());
+  ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
   
   if(f_new_book.fail()){
     cout << "Failed to create new file" << endl;

@@ -75,7 +75,7 @@ int main() {
 			// TODO, check for duplicate titles on incoming books during import
 			clear();
 			printw("Add import function here");
-			importBook("../Test_PDF_Files/SweatingCandles.pdf")
+			importBook("../Test_PDF_Files/SweatingCandles.pdf");
 			refresh();
 			break;
 		case 4:
@@ -363,6 +363,13 @@ string selectBook(priority_queue<string> library) {
 
 int importBook(const char * path){
 	
+	if (!isDir("./importedBooks/")) {
+		if (-1 == mkdir("./importedBooks/", S_IRWXU)) {
+			cerr << "Error creating library directory." << endl;
+			exit(1);
+		}
+	}
+	
 	string f_export_name; // name of the exported txt file
   fstream f_export;			// exported txt file object
   
@@ -410,7 +417,7 @@ int importBook(const char * path){
   }
   f_export.close();
   
-  ofstream f_new_book(f_export_name.c_str());
+  ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
   
   if(f_new_book.fail()){
     cout << "Failed to create new file" << endl;
