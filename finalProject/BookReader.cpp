@@ -60,7 +60,9 @@ int main() {
 		choice = getSelection(menuEntries, numEntries);
 		switch (choice) {
 		case 0:
-			if (!currentBook.empty()) {  //TODO this error check is not enough I've had it crash on unitilized string
+			//TODO this error check is not enough I've had it crash on unitilized string
+			//it seems to work now
+			if (!currentBook.empty()) {  
 				readBook(currentBook); //readBook("this title doesnt exist"); //error check,
 			}
 			break;
@@ -198,6 +200,13 @@ priority_queue<string> openLibrary(string & lastBook) {
 	} else {
 		fName = "./importedBooks/library.dat";
 		ofstream newFile(fName.c_str());
+
+		if (newFile.fail()) {
+			cerr << "Error (openLibrary()): cannot open file '" + fName << "'" << endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
+
 		newFile.close();
 	}
 
@@ -226,7 +235,15 @@ void readBook(string title) {
 	unsigned int linesPerScreen;
 	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
-	//ALEX TODO: error checking for bookStream, there is an error if no book selected when this is called, can happen on initial startup
+
+	//error checking for bookStream
+	//there is an error if no book selected when this is called, can happen on initial startup
+	if (bookStream.fail()) {
+		cerr << "Error (readBook()): cannot open file '" + fName << "'" << endl;
+		cerr << "Closing Program..." << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	bookStream.open(fName.c_str());
 	int row, col;
 	int charCount = 0;
@@ -341,6 +358,8 @@ bool isDir(const char* path) {
 
 // select book from library
 string selectBook(priority_queue<string> library) {
+
+	//ALEX TODO: add check for selecting book when library empty
 	string selectedBook;
 	int numBooks = library.size();
 	string booksString[library.size()];
