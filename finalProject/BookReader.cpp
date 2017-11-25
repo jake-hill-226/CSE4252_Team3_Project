@@ -351,10 +351,35 @@ string selectBook(priority_queue<string> library) {
 void importBook(const char * path){
 	if(isDir(path)){
 		try{
-			string command("pdftotext ");
-			command.append(path);
+			if (!isDir("./importedBooks/")) {
+				if (-1 == mkdir("./importedBooks/", S_IRWXU)) {
+					cerr << "Error creating library directory." << endl;
+					exit(1);
+				}
+			}
+			string s_path(path);
     
-			system(command.c_str());
+	    string command = "pdftotext -nopgbrk ";
+	    command.append(path);
+	    
+			status = system(command.c_str());
+	    
+	    command  = "cp ";
+	    
+	    int i = s_path.find(".pdf");
+	    
+	    if(i == string::npos){
+	      return 0;
+	    }
+	    
+	    s_path.replace(i, 4, ".txt");
+	    command.append(s_path);
+	    
+	    command.append(" ./importedBooks");
+	    
+	    cout << command << endl;
+	    
+	    system(command.c_str());
 		
 		} catch(const std::exception& e) {
 			cout << "Failed to execute command";
