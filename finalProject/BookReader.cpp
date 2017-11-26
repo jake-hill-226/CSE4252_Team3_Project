@@ -14,12 +14,6 @@
 #include <sys/stat.h>
 #include <queue>
 #include <sstream>
-
-#include <stdlib.h>
-#include <stdexcept>
-#include <stdio.h>
-#include <utility>
-
 using namespace std;
 
 //************************** FOR TESTING AND DEVELOPMENT ******************
@@ -32,7 +26,7 @@ void makeTestLibrary(priority_queue<string> & library);
 priority_queue<string> openLibrary(string & lastBook);
 
 // close library and save updates
-void closeLibrary(priority_queue<string> library, string lastBook);
+void closeLibrary(priority_queue<string> & library, string lastBook);
 
 // print screen of text
 void readBook(string title);
@@ -44,22 +38,16 @@ int getSelection(const char * entries[], int numEntries);
 bool isDir(const char* path);
 
 // select book from library
-string selectBook(priority_queue<string> library);
+string selectBook(priority_queue<string> & library);
 
 // select chapter and move index to appropriate location
 void jumpToChapter(string selectedBook);
 
 // import a book from pdf format
-int importBook(const char * path);
+string importPDF(const char * path);
 
-// Helper function for importBook.
-// Generates .dat file for imported book. Used by readBook function to 
-// generate navigation logic for a given book.
-void generateMetadata(const char* pdf_path, const char* txt_path, const char* meta_path);
-
-// Executes a command-line statement and returns the output of the command
-// Used strictly as a helper function. Should not be used outside of this file
-std::string exec(const char* cmd);
+// get user inputs to import book and calls sub function per file type
+void importBook(priority_queue<string> & library);
 
 int main() {
 	string currentBook;
@@ -86,10 +74,8 @@ int main() {
 		case 3:
 			// TODO add .txt/.dat files to directory and add library
 			// TODO, check for duplicate titles on incoming books during import
-			clear();
-			printw("Add import function here");
-			importBook("../Test_PDF_Files/SweatingCandles.pdf");
-			refresh();
+			importBook(library);
+			cerr << endl << endl<< "returned from input book" << endl << endl;
 			break;
 		case 4:
 			makeTestLibrary(library);
@@ -226,7 +212,7 @@ priority_queue<string> openLibrary(string & lastBook) {
 }
 
 // close library and save updates
-void closeLibrary(priority_queue<string> library, string lastBook) {
+void closeLibrary(priority_queue<string> & library, string lastBook) {
 	string fName = "./importedBooks/library.dat";
 	ofstream file(fName.c_str());
 	string buffer;
@@ -242,7 +228,7 @@ void closeLibrary(priority_queue<string> library, string lastBook) {
 // print screen of text
 void readBook(string title) {
 	//if empty title, or SelectBookDefault
-	if (title.empty() || title=="SelectBookDefault") {
+	if (title.empty() || title == "SelectBookDefault") {
 		return;
 	}
 	Book * currentBook = new Book(title);
@@ -285,25 +271,25 @@ void readBook(string title) {
 		}
 		refresh();
 		ch = getch();
-			switch (ch) {
-			case KEY_UP:
-				if (index > linesPerScreen){
-					index -= linesPerScreen;
-				}else {
-					index=0;
-				}
-				break;
-			case KEY_DOWN:
-				if (index + linesPerScreen < currentBook->getNumLines()) {
-					index += linesPerScreen;
-				} else {
-					index = currentBook->getNumLines()-linesPerScreen;
-				}
-				break;
-			default:
-				break;
+		switch (ch) {
+		case KEY_UP:
+			if (index > linesPerScreen) {
+				index -= linesPerScreen;
+			} else {
+				index = 0;
 			}
+			break;
+		case KEY_DOWN:
+			if (index + linesPerScreen < currentBook->getNumLines()) {
+				index += linesPerScreen;
+			} else {
+				index = currentBook->getNumLines() - linesPerScreen;
+			}
+			break;
+		default:
+			break;
 		}
+	}
 	currentBook->setIndex(index);
 	bookStream.close();
 	delete currentBook;
@@ -372,7 +358,7 @@ bool isDir(const char* path) {
 }
 
 // select book from library
-string selectBook(priority_queue<string> library) {
+string selectBook(priority_queue<string> & library) {
 
 	//check for selecting book when library empty
 	string selectedBook = "SelectBookDefault";
@@ -398,241 +384,114 @@ string selectBook(priority_queue<string> library) {
 	return selectedBook;
 }
 
-int importBook(const char * path){
-	
-	if (!isDir("./importedBooks/")) {
+string importPDF(const char * path) {
+
+	if (!isDir("./importedBooks/")) {			// TODO is this needed? directory is built when the app opens by openLibrary()
 		if (-1 == mkdir("./importedBooks/", S_IRWXU)) {
 			cerr << "Error creating library directory." << endl;
 			exit(1);
 		}
 	}
-	
-	string f_export_name; // name of the exported txt file
-  fstream f_export;			// exported txt file object
-  
-// Allow for manipulation of path via string methods
-  string s_path(path);
-  
-  // Check if path is to .pdf file
-  int index = s_path.find(".pdf");
-  
-  if(index == string::npos){
-    cout << "Path chosen does not point to a .pdf file" << endl;
-    return 0;
-  }
-  
-  // Get the name for the .txt output file of pdf2text
-  s_path.replace(index, 4, ".txt");
-  
-  while(s_path[index] != '/' && index > 0){
-    index --;
-  }
-  
-  f_export_name = s_path.substr(index+1);
+	string f_export_name; 		// name of the exported txt file
+	fstream f_export;			// exported txt file object
 
-  // Call executable for pdftotext given the input path
-  string command = "./pdf2txt.exe -o ./importedBooks/" + f_export_name + " ";
-  command.append(path);
-  system(command.c_str());
-  
-  
-  // Check if pdftotext successfully exported a .txt
-  string txt_path = "./importedBooks/" + f_export_name;
-  f_export.open(txt_path.c_str());
-  
-  if(f_export.fail()){
-    cout << ".txt failed to be instantiated";
-    return -1;
-  }
-  
-  // Read exported .txt and copy to new/existing file
-  stringstream export_content;
-  string buffer;
-  while(getline(f_export, buffer)){
-    export_content << buffer;
-    export_content << endl;
-  }
-  f_export.close();
-  
-  ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
-  
-  if(f_new_book.fail()){
-    cout << "Failed to create new file" << endl;
-    return -1;
-  }
-  
-  f_new_book << export_content.str();
-  
-  f_new_book.close();
-  
-  generateMetadata(path, txt_path.c_str(), "./test.dat");
+	// Allow for manipulation of path via string methods
+	string s_path(path);
 
-	return 1;
-}
+	// Check if path is to .pdf file
+	int index = s_path.find(".pdf");
+	if (index == string::npos) {				//TODO comparison of int and unsigned int, is this guaranteed safe by the code?
+		cerr << "Path chosen does not point to a .pdf file" << endl;
+		//return -1;
+		// TODO this func no longer returns int what do you want to do with this? exit(-1)??
+		// changed above cout to cerr for my own debuging
+	}
 
-void generateMetadata(const char* pdf_path, const char* txt_path, const char* meta_path){
-  ofstream f_meta(meta_path);
-  if(f_meta.fail()){
-    cout << "Failed to create metadata file" << endl;
-    return;
-  }
-  
-  fstream f_txt(txt_path);
-  if(f_txt.fail()){
-    cout << "Failed to open txt file" << endl;
-    return;
-  }
-  
-  int curr_index = 0;
-  int num_lines = 0;
-  int num_chapters = 0;
-  pair<string, int> * chapter_map;
-  
-  // Capture content and number of lines in the file
-  string buffer;
-  string txt_contents = "";
-  while(getline(f_txt, buffer)){
-    num_lines ++;
-    
-    txt_contents += buffer + "\n";
-  }
-  
-  f_txt.close();
-  
-  ofstream temp("./temp_toc.txt");
-  temp.close();
-  
-  // Create file mapping chapters to page numbers
-  stringstream command;
-  command << "./bookMarkMapper.exe ";
-  command << pdf_path;
-  
-  cout << "TESTING: " << command.str() << endl;
-  
-  exec(command.str().c_str());
-  
-  fstream f_chapter("./temp_toc.txt");
-  if(f_chapter.fail()){
-    cout << "Failed to open table of contents file" << endl;
-    return;
-  }
-  
-  if(getline(f_chapter, buffer)){
-    istringstream(buffer) >> num_chapters;
-    // num_chapters = stoi(buffer, nullptr);
-  }
-  
-  if(num_chapters != 0){
-    chapter_map = new pair<string,int>[num_chapters];
-    int i = 0;
-    while(getline(f_chapter, buffer) and i < num_chapters){
-      chapter_map[i].first = buffer; // Set chapter title
-      getline(f_chapter, buffer);
-      istringstream(buffer) >> chapter_map[i].second; // Set chapter page
-      
-      i++;
-    }
-    
-    f_chapter.close();
-    
-    exec("rm ./temp_toc.txt");
-    
-    // match chapter pages with string indecies
-    int curr_chapter = 0;
-    int page_num = chapter_map[curr_chapter].second;
-    command.flush();
-    command.str("");
-    command << "./pdf2txt.exe -p ";
-    command << page_num; 
-    command << " ";
-    command << pdf_path;
-    
-    
-    string page = exec(command.str().c_str());
-    
-    int index_offset = 0;
-    while(page != ""){
-      // Find first occurance of page in full txt_file
-      int chap_index = txt_contents.find(page); 
-      
-      if(chap_index == string::npos){
-        cout << "Chapter " << curr_chapter << " content did not line up with txt doc" << endl
-              << "Aborting" << endl;
-        return;
-      }
-      
-      // txt_contents = txt_contents.substr(chap_index);
-      // index_offset += chap_index;
-      
-      chapter_map[curr_chapter].second = chap_index;
-      
-      curr_chapter++;
-      
-      int page_num = chapter_map[curr_chapter].second;
-      command.str("");
-      command << "./pdf2txt.exe -p ";
-      command << page_num; 
-      command << " ";
-      command << pdf_path;
-      page = exec(command.str().c_str());
-    }
-    
-  }
-  
-  cout << "\t---Metadata---" << endl
-       << "Current Index: " << curr_index << endl
-       << "Num of Lines: " << num_lines << endl
-       << "Num of Chapters: " << num_chapters << endl
-       << "\tTable of Contents" << endl;
-  for(int i = 0; i < num_chapters; i++){
-    cout << chapter_map[i].first << " index: " << chapter_map[i].second << endl;
-  }
-  
-  // Export Metadata to .dat file
-  f_meta << curr_index << endl
-         << num_lines << endl
-         << num_chapters << endl;
-  for(int i = 0; i < num_chapters; i++){
-    f_meta << chapter_map[i].first << endl
-           << chapter_map[i].second << endl;
-  }
-  
-  f_meta.close();
-       
-  // Clean up
-  delete[] chapter_map;
+	// Call executable for pdftotext given the input path
+	string command = "pdftotext -nopgbrk ";
+	command.append(path);
+	system(command.c_str());
+
+	// Get the path for the .txt output of pdftotext
+	s_path.replace(index, 4, ".txt");
+	while (s_path[index] != '/' && index > 0) {
+		index--;
+	}
+	f_export_name = s_path.substr(index + 1);
+
+	// Check if pdftotext successfully exported a .txt
+	f_export.open(s_path.c_str());
+	if (f_export.fail()) {
+		cerr << ".txt failed to be instantiated";
+		//return -1;
+		// TODO this func no longer returns int what do you want to do with this? exit(-1)??
+		// changed above cout to cerr for my own debuging
+	}
+
+	// Read exported .txt and copy to new/existing file
+	stringstream export_content;
+	string buffer;
+	while (getline(f_export, buffer)) {
+		export_content << buffer;
+		export_content << endl;
+	}
+	f_export.close();
+	ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
+	if (f_new_book.fail()) {
+		cerr << "Failed to create new file" << endl;
+				//return -1;
+		// TODO this func no longer returns int what do you want to do with this? exit(-1)??
+		// changed above cout to cerr for my own debuging
+			}
+	f_new_book << export_content.str();
+	f_new_book.close();
+
+	return f_export_name;
 }
 
 // select chapter and move index to appropriate location
-void jumpToChapter(string selectedBook){
-	if (selectedBook.empty() || selectedBook=="SelectBookDefault"){
+void jumpToChapter(string selectedBook) {
+	if (selectedBook.empty() || selectedBook == "SelectBookDefault") {
 		return;
 	}
 	vector<pair<string, int> > chapters;
 	Book * currentBook = new Book(selectedBook);
 	const char * chapterTitles[currentBook->getChapters().size()];
-	for (int i =0; i < (int)currentBook->getChapters().size(); i++){
-		chapterTitles[i]=currentBook->getChapters()[i].first.c_str();
+	for (int i = 0; i < (int) currentBook->getChapters().size(); i++) {
+		chapterTitles[i] = currentBook->getChapters()[i].first.c_str();
 	}
-	int selection =getSelection(chapterTitles, currentBook->getChapters().size());
-	currentBook->setIndex(currentBook->getChapters()[selection].second-1);
+	int selection = getSelection(chapterTitles, currentBook->getChapters().size());
+	currentBook->setIndex(currentBook->getChapters()[selection].second - 1);
 	delete currentBook;
 }
 
-std::string exec(const char* cmd) {
-    char buffer[128];
-    std::string result = "";
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe) throw std::runtime_error("popen() failed!");
-    try {
-        while (!feof(pipe)) {
-            if (fgets(buffer, 128, pipe) != NULL)
-                result += buffer;
-        }
-    } catch (...) {
-        pclose(pipe);
-        throw;
-    }
-    pclose(pipe);
-    return result;
+void importBook(priority_queue<string> & library) {
+	int width = 60;
+	int height = 10;
+	int spacing = 1;
+	int lineNum = 1;
+	int row, col;
+	char * path;
+	getmaxyx(stdscr, row, col);
+	WINDOW * importWindow = newwin(height, width, (row - height) / 2, (col - width) / 2);
+	keypad(importWindow, TRUE);
+	clear();
+	refresh();
+	box(importWindow, 0, 0);
+	mvwprintw(importWindow, lineNum++, spacing, "Enter path/filename of book to be imported: ");
+	mvwprintw(importWindow, lineNum++, spacing, "");
+	wrefresh(importWindow);
+	echo();
+	wgetstr(importWindow, path);
+	cerr << endl << endl<< "got input" << endl << endl;
+	noecho();
+
+	//importPDF(path);					// this causes seg fault
+	//library.push(importPDF(path));   // this is what we want
+
+	getch();
+	endwin();
+	library.size();
+	cerr << endl << endl<< "end of importBook" << endl << endl;
 }
+
