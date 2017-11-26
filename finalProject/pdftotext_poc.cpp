@@ -36,8 +36,8 @@ std::string exec(const char* cmd) {
     return result;
 }
 
-void generateMetadata(const char* pdf_path, const char* meta_path, const char* txt_path){
-  ostream f_meta(meta_path);
+void generateMetadata(const char* pdf_path, const char* txt_path, const char* meta_path){
+  ofstream f_meta(meta_path);
   if(f_meta.fail()){
     cout << "Failed to create metadata file" << endl;
     return;
@@ -60,15 +60,22 @@ void generateMetadata(const char* pdf_path, const char* meta_path, const char* t
   while(getline(f_txt, buffer)){
     num_lines ++;
     
-    txt_contents += buffer;
+    txt_contents += buffer + "\n";
   }
   
   f_txt.close();
   
+  ofstream temp("./temp_toc.txt");
+  temp.close();
+  
   // Create file mapping chapters to page numbers
-  string command = "./bookMarkMapper.exe ";
-  command.append(pdf_path);
-  exec(command.c_str());
+  stringstream command;
+  command << "./bookMarkMapper.exe ";
+  command << pdf_path;
+  
+  cout << "TESTING: " << command.str() << endl;
+  
+  exec(command.str().c_str());
   
   fstream f_chapter("./temp_toc.txt");
   if(f_chapter.fail()){
@@ -77,7 +84,8 @@ void generateMetadata(const char* pdf_path, const char* meta_path, const char* t
   }
   
   if(getline(f_chapter, buffer)){
-    num_chapters = (int)buffer;
+    istringstream(buffer) >> num_chapters;
+    // num_chapters = stoi(buffer, nullptr);
   }
   
   if(num_chapters != 0){
@@ -86,18 +94,81 @@ void generateMetadata(const char* pdf_path, const char* meta_path, const char* t
     while(getline(f_chapter, buffer) and i < num_chapters){
       chapter_map[i].first = buffer; // Set chapter title
       getline(f_chapter, buffer);
-      chapter_map[i].second = buffer; // Set chapter page
+      istringstream(buffer) >> chapter_map[i].second; // Set chapter page
+      
+      i++;
     }
     
-    // match pages with string indecies
-    string page;
+    f_chapter.close();
+    
+    exec("rm ./temp_toc.txt");
+    
+    // match chapter pages with string indecies
+    int curr_chapter = 0;
+    int page_num = chapter_map[curr_chapter].second;
+    command.flush();
+    command.str("");
+    command << "./pdf2txt.exe -p ";
+    command << page_num; 
+    command << " ";
+    command << pdf_path;
+    
+    
+    string page = exec(command.str().c_str());
+    
+    int index_offset = 0;
+    while(page != ""){
+      // Find first occurance of page in full txt_file
+      int chap_index = txt_contents.find(page); 
+      
+      if(chap_index == string::npos){
+        cout << "Chapter " << curr_chapter << " content did not line up with txt doc" << endl
+              << "Aborting" << endl;
+        return;
+      }
+      
+      // txt_contents = txt_contents.substr(chap_index);
+      // index_offset += chap_index;
+      
+      chapter_map[curr_chapter].second = chap_index;
+      
+      curr_chapter++;
+      
+      int page_num = chapter_map[curr_chapter].second;
+      command.str("");
+      command << "./pdf2txt.exe -p ";
+      command << page_num; 
+      command << " ";
+      command << pdf_path;
+      page = exec(command.str().c_str());
+    }
+    
   }
-  f_chapter.close();
   
+  cout << "\t---Metadata---" << endl
+       << "Current Index: " << curr_index << endl
+       << "Num of Lines: " << num_lines << endl
+       << "Num of Chapters: " << num_chapters << endl
+       << "\tTable of Contents" << endl;
+  for(int i = 0; i < num_chapters; i++){
+    cout << chapter_map[i].first << " index: " << chapter_map[i].second << endl;
+  }
+  
+  f_meta << curr_index << endl
+         << num_lines << endl
+         << num_chapters << endl;
+  for(int i = 0; i < num_chapters; i++){
+    f_meta << chapter_map[i].first << endl
+           << chapter_map[i].second << endl;
+  }
+  
+  f_meta.close();
+       
+  delete[] chapter_map;
 }
 
 int main(){
-  const char* path = "../Test_PDF_Files/SweatingCandles.pdf";
+  const char* path = "../Test_PDF_Files/gatsby.pdf";
   
   
   string f_export_name;
@@ -124,14 +195,14 @@ int main(){
   f_export_name = s_path.substr(index+1);
 
   // Call executable for pdftotext given the input path
-  string command = "./pdf2txt -o ./importedBooks" + f_export_name;
+  string command = "./pdf2txt.exe -o ./importedBooks/" + f_export_name + " ";
   command.append(path);
-  
   system(command.c_str());
   
   
   // Check if pdftotext successfully exported a .txt
-  f_export.open(s_path.c_str());
+  string txt_path = "./importedBooks/" + f_export_name;
+  f_export.open(txt_path.c_str());
   
   if(f_export.fail()){
     cout << ".txt failed to be instantiated";
@@ -157,6 +228,8 @@ int main(){
   f_new_book << export_content.str();
   
   f_new_book.close();
+  
+  generateMetadata(path, txt_path.c_str(), "./test.dat");
 
 	return 0;
 }
