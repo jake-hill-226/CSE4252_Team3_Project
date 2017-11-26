@@ -235,13 +235,13 @@ void closeLibrary(priority_queue<string> library, string lastBook) {
 		buffer = library.top();
 		file << buffer << endl;
 		library.pop();
-		;
 	}
 }
 
 // print screen of text
 void readBook(string title) {
-	//if empty title, or SelectBookDefault
+	//if empty title, or SelectBookDefault (aka no book selected)
+	//then we can't read the book, so just return
 	if (title.empty() || title=="SelectBookDefault") {
 		return;
 	}
@@ -252,7 +252,6 @@ void readBook(string title) {
 	fstream bookStream;
 
 	//error checking for bookStream
-	//there is an error if no book selected when this is called, can happen on initial startup
 	if (bookStream.fail()) {
 		cerr << "Error (readBook()): cannot open file '" + fName << "'" << endl;
 		cerr << "Closing Program..." << endl;
