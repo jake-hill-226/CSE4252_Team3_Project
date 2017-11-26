@@ -63,7 +63,7 @@ std::string exec(const char* cmd);
 
 int main() {
 	string currentBook;
-	priority_queue<string> library = openLibrary(currentBook); //TODO make sure never pop when empty, will cause seg fault
+	priority_queue<string> library = openLibrary(currentBook);
 	int choice = 0;
 	initscr();
 	cbreak();
@@ -234,7 +234,10 @@ void closeLibrary(priority_queue<string> library, string lastBook) {
 	while (library.size() > 0) {
 		buffer = library.top();
 		file << buffer << endl;
-		library.pop();
+		//don't pop if queue is empty
+		if (!library.empty()) {
+			library.pop();
+		}
 	}
 }
 
@@ -384,7 +387,10 @@ string selectBook(priority_queue<string> library) {
 	for (int i = 0; i < numBooks; i++) {
 		booksString[i] = library.top();
 		booksChar[numBooks - 1 - i] = booksString[i].c_str();
-		library.pop();
+		//don't pop if queue is empty
+		if (!library.empty()) {
+			library.pop();
+		}
 	}
 	for (int j = 0; j < numBooks; j++) {
 		library.push(booksString[numBooks - 1 - j].c_str());
