@@ -60,9 +60,7 @@ int main() {
 		choice = getSelection(menuEntries, numEntries);
 		switch (choice) {
 		case 0:
-			if (!currentBook.empty()) {  //TODO this error check is not enough I've had it crash on unitilized string
-				readBook(currentBook); //readBook("this title doesnt exist"); //error check,
-			}
+			readBook(currentBook);
 			break;
 		case 1:
 			currentBook = selectBook(library);
@@ -198,6 +196,13 @@ priority_queue<string> openLibrary(string & lastBook) {
 	} else {
 		fName = "./importedBooks/library.dat";
 		ofstream newFile(fName.c_str());
+
+		if (newFile.fail()) {
+			cerr << "Error (openLibrary()): cannot open file '" + fName << "'" << endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
+
 		newFile.close();
 	}
 
@@ -221,12 +226,24 @@ void closeLibrary(priority_queue<string> library, string lastBook) {
 
 // print screen of text
 void readBook(string title) {
+	//if empty title, or SelectBookDefault
+	if (title.empty() || title=="SelectBookDefault") {
+		return;
+	}
 	Book * currentBook = new Book(title);
 	unsigned int index = currentBook->getIndex();
 	unsigned int linesPerScreen;
 	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
-	//ALEX TODO: error checking for bookStream, there is an error if no book selected when this is called, can happen on initial startup
+
+	//error checking for bookStream
+	//there is an error if no book selected when this is called, can happen on initial startup
+	if (bookStream.fail()) {
+		cerr << "Error (readBook()): cannot open file '" + fName << "'" << endl;
+		cerr << "Closing Program..." << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	bookStream.open(fName.c_str());
 	int row, col;
 	int charCount = 0;
@@ -341,8 +358,13 @@ bool isDir(const char* path) {
 
 // select book from library
 string selectBook(priority_queue<string> library) {
-	string selectedBook;
+
+	//check for selecting book when library empty
+	string selectedBook = "SelectBookDefault";
 	int numBooks = library.size();
+	if (numBooks == 0) {
+		return selectedBook;
+	}
 	string booksString[library.size()];
 	const char * booksChar[library.size()];
 	for (int i = 0; i < numBooks; i++) {
@@ -433,6 +455,9 @@ int importBook(const char * path){
 
 // select chapter and move index to appropriate location
 void jumpToChapter(string selectedBook){
+	if (selectedBook.empty() || selectedBook=="SelectBookDefault"){
+		return;
+	}
 	vector<pair<string, int> > chapters;
 	Book * currentBook = new Book(selectedBook);
 	const char * chapterTitles[currentBook->getChapters().size()];
