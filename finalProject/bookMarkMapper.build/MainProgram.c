@@ -1,1 +1,0 @@
-/home/boneheadjake/.local/lib/python2.7/site-packages/nuitka/build/static_src/MainProgram.c
