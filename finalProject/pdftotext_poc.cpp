@@ -154,6 +154,7 @@ void generateMetadata(const char* pdf_path, const char* txt_path, const char* me
     cout << chapter_map[i].first << " index: " << chapter_map[i].second << endl;
   }
   
+  // Export Metadata to .dat file
   f_meta << curr_index << endl
          << num_lines << endl
          << num_chapters << endl;
@@ -164,6 +165,7 @@ void generateMetadata(const char* pdf_path, const char* txt_path, const char* me
   
   f_meta.close();
        
+  // Clean up
   delete[] chapter_map;
 }
 
