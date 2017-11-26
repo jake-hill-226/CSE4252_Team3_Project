@@ -392,61 +392,68 @@ string importPDF(const char * path) {
 			exit(1);
 		}
 	}
-	string f_export_name; 		// name of the exported txt file
-	fstream f_export;			// exported txt file object
+	
+	string f_export_name;
+  fstream f_export;
+  
+  // Allow for manipulation of path via string methods
+  string s_path(path);
+  
+  // Check if path is to .pdf file
+  int index = s_path.find(".pdf");
+  
+  if(index == string::npos){
+    cerr << "Path chosen does not point to a .pdf file" << endl;
+    //return 0;
+  }
+  
+  // Get the path for the .txt output of pdftotext
+  s_path.replace(index, 4, ".txt");
+  
+  while(s_path[index] != '/' && index > 0){
+    index --;
+  }
+  
+  f_export_name = s_path.substr(index+1);
 
-	// Allow for manipulation of path via string methods
-	string s_path(path);
+  // Call executable for pdftotext given the input path
+  string command = "./pdf2txt.exe -o ./importedBooks/" + f_export_name + " ";
+  command.append(path);
+  system(command.c_str());
+  
+  
+  // Check if pdftotext successfully exported a .txt
+  string txt_path = "./importedBooks/" + f_export_name;
+  f_export.open(txt_path.c_str());
+  
+  if(f_export.fail()){
+    cerr << ".txt failed to be instantiated";
+    //return -1;
+  }
+  
+  // Read exported .txt and copy to new/existing file
+  stringstream export_content;
+  string buffer;
+  while(getline(f_export, buffer)){
+    export_content << buffer;
+    export_content << endl;
+  }
+  f_export.close();
+  
+  ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
+  
+  if(f_new_book.fail()){
+    cerr << "Failed to create new file" << endl;
+    //return -1;
+  }
+  
+  f_new_book << export_content.str();
+  
+  f_new_book.close();
+  
+  generateMetadata(path, txt_path.c_str(), "./test.dat");
 
-	// Check if path is to .pdf file
-	int index = s_path.find(".pdf");
-	if (index == string::npos) {				//TODO comparison of int and unsigned int, is this guaranteed safe by the code?
-		cerr << "Path chosen does not point to a .pdf file" << endl;
-		//return -1;
-		// TODO this func no longer returns int what do you want to do with this? exit(-1)??
-		// changed above cout to cerr for my own debuging
-	}
-
-	// Call executable for pdftotext given the input path
-	string command = "pdftotext -nopgbrk ";
-	command.append(path);
-	system(command.c_str());
-
-	// Get the path for the .txt output of pdftotext
-	s_path.replace(index, 4, ".txt");
-	while (s_path[index] != '/' && index > 0) {
-		index--;
-	}
-	f_export_name = s_path.substr(index + 1);
-
-	// Check if pdftotext successfully exported a .txt
-	f_export.open(s_path.c_str());
-	if (f_export.fail()) {
-		cerr << ".txt failed to be instantiated";
-		//return -1;
-		// TODO this func no longer returns int what do you want to do with this? exit(-1)??
-		// changed above cout to cerr for my own debuging
-	}
-
-	// Read exported .txt and copy to new/existing file
-	stringstream export_content;
-	string buffer;
-	while (getline(f_export, buffer)) {
-		export_content << buffer;
-		export_content << endl;
-	}
-	f_export.close();
-	ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
-	if (f_new_book.fail()) {
-		cerr << "Failed to create new file" << endl;
-				//return -1;
-		// TODO this func no longer returns int what do you want to do with this? exit(-1)??
-		// changed above cout to cerr for my own debuging
-			}
-	f_new_book << export_content.str();
-	f_new_book.close();
-
-	return f_export_name;
+	return f_export_name.substr(0, f_export_name.length() - 5);
 }
 
 // select chapter and move index to appropriate location
