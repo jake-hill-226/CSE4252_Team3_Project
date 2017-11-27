@@ -35,6 +35,7 @@ public:
 		string fName = "./importedBooks/" + title + ".dat";
 		file.open(fName.c_str());
 
+		//assert that file stream is valid
 		if (file.fail()) {
 			cerr << "Error (book.cpp constructor): cannot open file '" + fName
 					<< "'" << endl;
@@ -42,20 +43,52 @@ public:
 			exit(EXIT_FAILURE);
 		}
 
-		//ALEX TODO: getline error checking
+		//first line of dat file: currentIndex
+		//second line: numLines
+		//3rd line: numChapters
+		//all following lines until eof in format:
+		//chapter x
+		//line # chapter x starts
+
 		getline(file, buffer);
+		//assert that file is still good after call to getline
+		if (file.fail() || file.bad()) {
+			cerr << "Error (book.cpp constructor): cannot get currentIndex from dat file"<< endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
 		this->currentIndex = atoi(buffer.c_str());
+
 		getline(file, buffer);
+		if (file.fail() || file.bad()) {
+			cerr << "Error (book.cpp constructor): cannot get numLines from dat file"<< endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
 		this->numLines = atoi(buffer.c_str());
+
 		getline(file, buffer);
+		if (file.fail() || file.bad()) {
+			cerr << "Error (book.cpp constructor): cannot get numChapters from dat file"<< endl;
+			cerr << "Closing Program..." << endl;
+			exit(EXIT_FAILURE);
+		}
 		this->numChapters = atoi(buffer.c_str());
+
 		for (int i = 0; i < this->numChapters; i++) {
 			getline(file, buffer);
 			getline(file, buffer2);
+			if (file.fail() || file.bad()) {
+				cerr << "Error (book.cpp constructor): error reading chapters from dat file"<< endl;
+				cerr << "Closing Program..." << endl;
+				exit(EXIT_FAILURE);
+			}
 			chapters.push_back(make_pair(buffer, atoi(buffer2.c_str())));
 		}
 		file.close();
 	}
+
+	//getters + setters
 	string getTitle() const {
 		return this->savedTitle;
 	}
@@ -71,11 +104,14 @@ public:
 	unsigned int getNumLines() const {
 		return this->numLines;
 	}
+
+	//destructor
 	~Book() {
 		ofstream file;
 		string fName = "./importedBooks/" + this->savedTitle + ".dat";
 		file.open(fName.c_str());
 
+		//error check on opening dat file
 		if (file.fail()) {
 			cerr << "Error (book.cpp destructor): cannot open file '" + fName
 					<< "'" << endl;
@@ -83,6 +119,7 @@ public:
 			exit(EXIT_FAILURE);
 		}
 
+		//edit dat file to reflect current state of book
 		file << this->currentIndex << endl;
 		file << this->numLines << endl;
 		file << this->numChapters << endl;
