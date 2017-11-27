@@ -180,8 +180,8 @@ string importTXT(const char* path){
   }
   
   string f_export_name = "../importedBooks/" + s_path.substr(index+1);
-  string export_title = s_path.substr(index+1, s_path.length() - 4);
-  
+  string export_title = s_path.substr(index+1, (s_path.length() - 4));
+  export_title = export_title.substr(0, export_title.length() - 4);
   
   
   ifstream f_txt(path);
@@ -218,7 +218,7 @@ string importTXT(const char* path){
    
   
   fstream f_export_txt(f_export_name.c_str());
-  if(f_export_txt.good() && txt_content != ""){
+  if(f_export_txt.good()){
      f_export_txt << txt_content;
   }else{
     ofstream new_file(f_export_name.c_str());
@@ -230,13 +230,14 @@ string importTXT(const char* path){
     }
   }
   
-  fstream f_export_dat(("../importBooks/" + export_title + "dat").c_str());
-  if(f_export_dat.good() && dat_content != ""){
+  fstream f_export_dat(("../importedBooks/" + export_title + ".dat").c_str());
+  if(f_export_dat.good()){
      f_export_dat << dat_content;
+     f_export_dat.close();
   }else{
-    ofstream new_file(("../importBooks/" + export_title + "dat").c_str());
-    if(new_file.fail() || dat_content == ""){
-      cerr << "Could not create new file " << f_export_name << endl;
+    ofstream new_file(("../importedBooks/" + export_title + ".dat").c_str());
+    if(new_file.fail()){
+      cerr << "Could not create new file " << ("../importedBooks/" + export_title + ".dat") << endl;
     }else{
       new_file << dat_content;
       new_file.close();
@@ -274,13 +275,13 @@ int main(){
   f_export_name = s_path.substr(index+1);
 
   // Call executable for pdftotext given the input path
-  string command = "./pdf2txt.exe -o ../importedBooks/" + f_export_name + " ";
+  string command = "./pdf2txt.exe -o ../txtBooks/" + f_export_name + " ";
   command.append(path);
   system(command.c_str());
   
   
   // Check if pdftotext successfully exported a .txt
-  string txt_path = "../importedBooks/" + f_export_name;
+  string txt_path = "../txtBooks/" + f_export_name;
   f_export.open(txt_path.c_str());
   
   if(f_export.fail()){
@@ -297,7 +298,7 @@ int main(){
   }
   f_export.close();
   
-  ofstream f_new_book(("../importedBooks/" + f_export_name).c_str());
+  ofstream f_new_book(("../txtBooks/" + f_export_name).c_str());
   
   if(f_new_book.fail()){
     cout << "Failed to create new file" << endl;
@@ -308,9 +309,10 @@ int main(){
   
   f_new_book.close();
   
-  generateMetadata(path, txt_path.c_str(), ("../importedBooks/" + f_export_name.substr(0, f_export_name.length()-3) + "dat").c_str());
+  generateMetadata(path, txt_path.c_str(), ("../txtBooks/" + f_export_name.substr(0, f_export_name.length()-3) + "dat").c_str());
   
-  cout << "TESTING: " << importTXT(("../importedBooks/" + f_export_name).c_str());
+  cout << "TESTING: " << f_export_name << endl;
+  cout << "TESTING: " << importTXT(("../txtBooks/" + f_export_name).c_str());
 
 	return 0;
 }

@@ -406,8 +406,8 @@ string importTXT(const char* path){
   }
   
   string f_export_name = "../importedBooks/" + s_path.substr(index+1);
-  string export_title = s_path.substr(index+1, s_path.length() - 4);
-  
+  string export_title = s_path.substr(index+1, (s_path.length() - 4));
+  export_title = export_title.substr(0, export_title.length() - 4);
   
   
   ifstream f_txt(path);
@@ -444,7 +444,7 @@ string importTXT(const char* path){
    
   
   fstream f_export_txt(f_export_name.c_str());
-  if(f_export_txt.good() && txt_content != ""){
+  if(f_export_txt.good()){
      f_export_txt << txt_content;
   }else{
     ofstream new_file(f_export_name.c_str());
@@ -456,13 +456,14 @@ string importTXT(const char* path){
     }
   }
   
-  fstream f_export_dat(("../importBooks/" + export_title + "dat").c_str());
-  if(f_export_dat.good() && dat_content != ""){
+  fstream f_export_dat(("../importedBooks/" + export_title + ".dat").c_str());
+  if(f_export_dat.good()){
      f_export_dat << dat_content;
+     f_export_dat.close();
   }else{
-    ofstream new_file(("../importBooks/" + export_title + "dat").c_str());
-    if(new_file.fail() || dat_content == ""){
-      cerr << "Could not create new file " << f_export_name << endl;
+    ofstream new_file(("../importedBooks/" + export_title + ".dat").c_str());
+    if(new_file.fail()){
+      cerr << "Could not create new file " << ("../importedBooks/" + export_title + ".dat") << endl;
     }else{
       new_file << dat_content;
       new_file.close();
