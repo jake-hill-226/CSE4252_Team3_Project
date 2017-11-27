@@ -17,7 +17,7 @@ int main() {
 	cbreak();
 	keypad(stdscr, TRUE);
 	noecho();
-	const char * menuEntries[] = { "Read Book", "Select book", "Select Chapter", "Import Book", "Create test Library", "Exit" };
+	const char * menuEntries[] = { "Read Book", "Select book", "Select Chapter", "Import txt Book", "Import PDF Book", "Create test Library", "Exit" };
 	int numEntries = sizeof(menuEntries) / sizeof(char *);
 	while (choice != numEntries - 1) {
 		choice = getSelection(menuEntries, numEntries);
@@ -34,7 +34,7 @@ int main() {
 		case 3:
 			importBook(library);
 			break;
-		case 4:
+		case 5:
 			makeTestLibrary(library);
 			break;
 		default:

@@ -239,14 +239,9 @@ void closeLibrary(priority_queue<string> & library, string lastBook) {
 
 // print screen of text
 void readBook(string title) {
-<<<<<<< HEAD
-	//if empty title, or SelectBookDefault
-	if (title.empty() || title == "SelectBookDefault") {
-=======
 	//if empty title, or SelectBookDefault (aka no book selected)
 	//then we can't read the book, so just return
 	if (title.empty() || title=="SelectBookDefault") {
->>>>>>> final-project
 		return;
 	}
 	Book * currentBook = new Book(title);
