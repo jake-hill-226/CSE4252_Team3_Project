@@ -32,7 +32,7 @@ public:
 		ifstream file;
 		string buffer;
 		string buffer2;
-		string fName = "./importedBooks/" + title + ".dat";
+		string fName = "../importedBooks/" + title + ".dat";
 		file.open(fName.c_str());
 
 		//assert that file stream is valid
@@ -108,7 +108,7 @@ public:
 	//destructor
 	~Book() {
 		ofstream file;
-		string fName = "./importedBooks/" + this->savedTitle + ".dat";
+		string fName = "../importedBooks/" + this->savedTitle + ".dat";
 		file.open(fName.c_str());
 
 		//error check on opening dat file

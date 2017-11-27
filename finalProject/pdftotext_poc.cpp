@@ -106,42 +106,42 @@ void generateMetadata(const char* pdf_path, const char* txt_path, const char* me
     // match chapter pages with string indecies
     int curr_chapter = 0;
     int page_num = chapter_map[curr_chapter].second;
-    command.flush();
-    command.str("");
-    command << "./pdf2txt.exe -p ";
-    command << page_num; 
-    command << " ";
-    command << pdf_path;
+    // command.flush();
+    // command.str("");
+    // command << "./pdf2txt.exe -p ";
+    // command << page_num; 
+    // command << " ";
+    // command << pdf_path;
     
     
-    string page = exec(command.str().c_str());
+    // string page = exec(command.str().c_str());
     
-    int index_offset = 0;
-    while(page != ""){
-      // Find first occurance of page in full txt_file
-      int chap_index = txt_contents.find(page); 
+    // int index_offset = 0;
+    // while(page != ""){
+    //   // Find first occurance of page in full txt_file
+    //   int chap_index = txt_contents.find(page); 
       
-      if(chap_index == string::npos){
-        cout << "Chapter " << curr_chapter << " content did not line up with txt doc" << endl
-              << "Aborting" << endl;
-        return;
-      }
+    //   if(chap_index == string::npos){
+    //     cout << "Chapter " << curr_chapter << " content did not line up with txt doc" << endl
+    //           << "Aborting" << endl;
+    //     return;
+    //   }
       
-      // txt_contents = txt_contents.substr(chap_index);
-      // index_offset += chap_index;
+    //   // txt_contents = txt_contents.substr(chap_index);
+    //   // index_offset += chap_index;
       
-      chapter_map[curr_chapter].second = chap_index;
+    //   chapter_map[curr_chapter].second = chap_index;
       
-      curr_chapter++;
+    //   curr_chapter++;
       
-      int page_num = chapter_map[curr_chapter].second;
-      command.str("");
-      command << "./pdf2txt.exe -p ";
-      command << page_num; 
-      command << " ";
-      command << pdf_path;
-      page = exec(command.str().c_str());
-    }
+    //   int page_num = chapter_map[curr_chapter].second;
+    //   command.str("");
+    //   command << "./pdf2txt.exe -p ";
+    //   command << page_num; 
+    //   command << " ";
+    //   command << pdf_path;
+    //   page = exec(command.str().c_str());
+    // }
     
   }
   
