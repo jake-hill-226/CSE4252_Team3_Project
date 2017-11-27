@@ -1,6 +1,6 @@
 //============================================================================
 // Name        : bookReader.cpp
-// Author      : Logic by Joshua Simmerson, error checking by Alex Barnes
+// Author      : Logic by Joshua Simmerson, error checking by Alex Barnes, import functions by Jake Hill
 // Version     : 1.0
 // Description : Ebook reader with ncurses based user interface.
 //============================================================================
@@ -52,7 +52,7 @@ void makeTestBook(string title, int numSentences) {
 
 	// make text file and record indexes for dat file
 	ofstream file;
-	string fName = "./importedBooks/" + title + ".txt";
+	string fName = "../importedBooks/" + title + ".txt";
 	file.open(fName.c_str());
 
 	//file open error check
@@ -86,7 +86,7 @@ void makeTestBook(string title, int numSentences) {
 	lines++;
 	file.close();
 	// write data file
-	fName = "./importedBooks/" + title + ".dat";
+	fName = "../importedBooks/" + title + ".dat";
 	file.open(fName.c_str());
 
 	//error check
@@ -135,15 +135,15 @@ void makeTestLibrary(priority_queue<string> & library) {
 
 // open library and return titles or creates library directory/file if not found
 priority_queue<string> openLibrary(string & lastBook) {
-	if (!isDir("./importedBooks/")) {
-		if (-1 == mkdir("./importedBooks/", S_IRWXU)) {
+	if (!isDir("../importedBooks/")) {
+		if (-1 == mkdir("../importedBooks/", S_IRWXU)) {
 			cerr << "Error creating library directory." << endl;
 			exit(1);
 		}
 	}
 	priority_queue<string> out;
 	string buffer;
-	string fName = "./importedBooks/library.dat";
+	string fName = "../importedBooks/library.dat";
 	ifstream file(fName.c_str());
 	getline(file, buffer);
 	lastBook = buffer;
@@ -152,7 +152,7 @@ priority_queue<string> openLibrary(string & lastBook) {
 			out.push(buffer);
 		}
 	} else {
-		fName = "./importedBooks/library.dat";
+		fName = "../importedBooks/library.dat";
 		ofstream newFile(fName.c_str());
 
 		if (newFile.fail()) {
@@ -170,7 +170,7 @@ priority_queue<string> openLibrary(string & lastBook) {
 
 // close library and save updates
 void closeLibrary(priority_queue<string> & library, string lastBook) {
-	string fName = "./importedBooks/library.dat";
+	string fName = "../importedBooks/library.dat";
 	ofstream file(fName.c_str());
 	string buffer;
 	file << lastBook << endl;
@@ -194,7 +194,7 @@ void readBook(string title) {
 	Book * currentBook = new Book(title);
 	unsigned int index = currentBook->getIndex();
 	unsigned int linesPerScreen;
-	string fName = "./importedBooks/" + currentBook->getTitle() + ".txt";
+	string fName = "../importedBooks/" + currentBook->getTitle() + ".txt";
 	fstream bookStream;
 
 	//error checking for bookStream
@@ -383,11 +383,91 @@ void importBook(priority_queue<string> & library) {
 	noecho();
 
 	//*********************************************************************************
-
-	//library.push(importPDF(path));   // imortPDF returns title<string> that goes in library
-
+	string title = importTXT(path);
+	if(title == ""){
+		cerr << "failed to import book" << endl;
+	}else{
+		library.push(title);   // imortTXT returns title<string> that goes in library
+	}
 	//*********************************************************************************
 
 	endwin();
 	library.size();
+}
+
+string importTXT(const char* path){
+  string txt_content = "";
+  string dat_path = "";
+  
+  string s_path(path);
+  int index = s_path.length() - 1;
+  while(s_path[index] != '/' && index > 0){
+    index --;
+  }
+  
+  string f_export_name = "../importedBooks/" + s_path.substr(index+1);
+  string export_title = s_path.substr(index+1, s_path.length() - 4);
+  
+  
+  
+  ifstream f_txt(path);
+  if(f_txt.fail()){
+    cerr << "Could not find .txt @ " << path << endl;
+    export_title = "";
+    return export_title; 
+  }else{
+    string buffer;
+    while(getline(f_txt, buffer)){
+      buffer.append("\n");
+      txt_content += buffer;
+    }
+  }
+  f_txt.close();
+  
+  dat_path.append(path);
+  dat_path = dat_path.substr(0, dat_path.length() - 3);
+  dat_path.append("dat");
+  
+  string dat_content = "";
+  
+  ifstream f_dat(dat_path.c_str());
+  if(f_dat.fail()){
+    cerr << "Could not find .dat @" << path << endl; 
+  }else{
+    string buffer;
+    while(getline(f_dat, buffer)){
+      buffer.append("\n");
+      dat_content += buffer;
+    }
+  }
+  f_dat.close();
+   
+  
+  fstream f_export_txt(f_export_name.c_str());
+  if(f_export_txt.good() && txt_content != ""){
+     f_export_txt << txt_content;
+  }else{
+    ofstream new_file(f_export_name.c_str());
+    if(new_file.fail() || txt_content == ""){
+      cerr << "Could not create new file " << f_export_name << endl;
+    }else{
+      new_file << txt_content;
+      new_file.close();
+    }
+  }
+  
+  fstream f_export_dat(("../importBooks/" + export_title + "dat").c_str());
+  if(f_export_dat.good() && dat_content != ""){
+     f_export_dat << dat_content;
+  }else{
+    ofstream new_file(("../importBooks/" + export_title + "dat").c_str());
+    if(new_file.fail() || dat_content == ""){
+      cerr << "Could not create new file " << f_export_name << endl;
+    }else{
+      new_file << dat_content;
+      new_file.close();
+    }
+  }
+  
+  return export_title;
 }

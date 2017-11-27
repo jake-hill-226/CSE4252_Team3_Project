@@ -169,6 +169,83 @@ void generateMetadata(const char* pdf_path, const char* txt_path, const char* me
   delete[] chapter_map;
 }
 
+string importTXT(const char* path){
+  string txt_content = "";
+  string dat_path = "";
+  
+  string s_path(path);
+  int index = s_path.length() - 1;
+  while(s_path[index] != '/' && index > 0){
+    index --;
+  }
+  
+  string f_export_name = "../importedBooks/" + s_path.substr(index+1);
+  string export_title = s_path.substr(index+1, s_path.length() - 4);
+  
+  
+  
+  ifstream f_txt(path);
+  if(f_txt.fail()){
+    cerr << "Could not find .txt @ " << path << endl;
+    export_title = "";
+    return export_title; 
+  }else{
+    string buffer;
+    while(getline(f_txt, buffer)){
+      buffer.append("\n");
+      txt_content += buffer;
+    }
+  }
+  f_txt.close();
+  
+  dat_path.append(path);
+  dat_path = dat_path.substr(0, dat_path.length() - 3);
+  dat_path.append("dat");
+  
+  string dat_content = "";
+  
+  ifstream f_dat(dat_path.c_str());
+  if(f_dat.fail()){
+    cerr << "Could not find .dat @" << path << endl; 
+  }else{
+    string buffer;
+    while(getline(f_dat, buffer)){
+      buffer.append("\n");
+      dat_content += buffer;
+    }
+  }
+  f_dat.close();
+   
+  
+  fstream f_export_txt(f_export_name.c_str());
+  if(f_export_txt.good() && txt_content != ""){
+     f_export_txt << txt_content;
+  }else{
+    ofstream new_file(f_export_name.c_str());
+    if(new_file.fail() || txt_content == ""){
+      cerr << "Could not create new file " << f_export_name << endl;
+    }else{
+      new_file << txt_content;
+      new_file.close();
+    }
+  }
+  
+  fstream f_export_dat(("../importBooks/" + export_title + "dat").c_str());
+  if(f_export_dat.good() && dat_content != ""){
+     f_export_dat << dat_content;
+  }else{
+    ofstream new_file(("../importBooks/" + export_title + "dat").c_str());
+    if(new_file.fail() || dat_content == ""){
+      cerr << "Could not create new file " << f_export_name << endl;
+    }else{
+      new_file << dat_content;
+      new_file.close();
+    }
+  }
+  
+  return export_title;
+}
+
 int main(){
   const char* path = "../Test_PDF_Files/gatsby.pdf";
   
@@ -197,13 +274,13 @@ int main(){
   f_export_name = s_path.substr(index+1);
 
   // Call executable for pdftotext given the input path
-  string command = "./pdf2txt.exe -o ./importedBooks/" + f_export_name + " ";
+  string command = "./pdf2txt.exe -o ../importedBooks/" + f_export_name + " ";
   command.append(path);
   system(command.c_str());
   
   
   // Check if pdftotext successfully exported a .txt
-  string txt_path = "./importedBooks/" + f_export_name;
+  string txt_path = "../importedBooks/" + f_export_name;
   f_export.open(txt_path.c_str());
   
   if(f_export.fail()){
@@ -220,7 +297,7 @@ int main(){
   }
   f_export.close();
   
-  ofstream f_new_book(("./importedBooks/" + f_export_name).c_str());
+  ofstream f_new_book(("../importedBooks/" + f_export_name).c_str());
   
   if(f_new_book.fail()){
     cout << "Failed to create new file" << endl;
@@ -231,7 +308,9 @@ int main(){
   
   f_new_book.close();
   
-  generateMetadata(path, txt_path.c_str(), "./test.dat");
+  generateMetadata(path, txt_path.c_str(), ("../importedBooks/" + f_export_name.substr(0, f_export_name.length()-3) + "dat").c_str());
+  
+  cout << "TESTING: " << importTXT(("../importedBooks/" + f_export_name).c_str());
 
 	return 0;
 }

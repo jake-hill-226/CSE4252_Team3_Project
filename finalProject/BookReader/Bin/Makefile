@@ -4,7 +4,7 @@ CFLAGS = -Wall -c $(DEBUG)
 LFLAGS = -Wall -lncurses $(DEBUG)
 
 ../Bin/BookReader: ../Source/BookReader.cpp
-	$(CC) $(CFLAGS) -o  ../Bin/BookReader ../Source/BookReader.cpp
+	$(CC) $(LFLAGS) -o  ../Bin/BookReader ../Source/BookReader.cpp
 
 ../Obj/BookReader.o: ../Source/BookReader.cpp
 	$(CC) $(CFLAGS) -o  ../Obj/BookReader.o ../Source/BookReader.cpp

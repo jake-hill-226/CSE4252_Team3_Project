@@ -40,4 +40,7 @@ void jumpToChapter(string selectedBook);
 // get user inputs to import book and calls sub function per file type
 void importBook(priority_queue<string> & library);
 
+// Imports a given txt file and the metadata via .dat if exists
+string importTXT(const char* path);
+
 #endif
